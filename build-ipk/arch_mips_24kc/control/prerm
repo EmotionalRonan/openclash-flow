@@ -1,5 +1,0 @@
-#!/bin/sh
-[ -n "${IPKG_INSTROOT}" ] || {
-    rm -f /tmp/luci-indexcache 2>/dev/null || true
-    exit 0
-}

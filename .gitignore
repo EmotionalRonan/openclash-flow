@@ -1,8 +1,33 @@
+# Dependencies
 node_modules/
-build/
+
+# Production & Packaging Build Artifacts
 dist/
+dist-ipk/
+build/
+build-ipk/
+server.js
+
+# Binary & Package Archives
+*.ipk
+*.tar.gz
+*.tar
+*.deb
+
+# Testing & Coverage
 coverage/
-.DS_Store
+.vitest/
+
+# Logs & Cache
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+*.tsbuildinfo
+
+# OS & Environment files
+.DS_Store
+.Thumbs.db
 .env*
 !.env.example

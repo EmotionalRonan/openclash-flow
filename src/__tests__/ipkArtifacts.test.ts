@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Checksums)', () => {
   const distDir = path.resolve(process.cwd(), 'dist-ipk');
@@ -12,6 +13,18 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
     'mipsel_24kc',
     'mips_24kc',
   ];
+
+  beforeAll(() => {
+    // If dist-ipk does not exist or is missing any IPKs, build them on the fly
+    const allExist =
+      fs.existsSync(distDir) &&
+      expectedArchs.every((arch) => fs.existsSync(path.join(distDir, `luci-app-openclash-flow_1.0.0-1_${arch}.ipk`))) &&
+      fs.existsSync(path.join(distDir, 'sha256sums.txt'));
+
+    if (!allExist) {
+      execSync('npm run build:ipk', { stdio: 'pipe' });
+    }
+  });
 
   it('dist-ipk 产物目录应存在', () => {
     expect(fs.existsSync(distDir)).toBe(true);

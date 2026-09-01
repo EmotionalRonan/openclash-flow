@@ -1,0 +1,94 @@
+name: Build & Test OpenClash Flow IPK Packages
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-test:
+    name: 🚀 Build Multi-Arch IPKs & Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🔍 TypeScript & Linter check
+        run: npm run lint
+
+      - name: 🧪 Run automated test suites (Vitest)
+        run: npm test
+
+      - name: 🔨 Build Multi-Architecture IPKs Matrix
+        run: |
+          chmod +x ./scripts/build-ipk.sh
+          npm run build:ipk
+
+      - name: 📊 Generate Build Summary
+        run: |
+          echo "## 🚀 OpenClash Flow IPK Build Matrix" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 架构 (Architecture) | 软件包文件名 | 文件大小 | SHA256 校验和 (前16位) |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          
+          for ipk in dist-ipk/*.ipk; do
+            filename=$(basename "$ipk")
+            filesize=$(ls -lh "$ipk" | awk '{print $5}')
+            sha_prefix=$(sha256sum "$ipk" | awk '{print substr($1,1,16)}')
+            arch=$(echo "$filename" | sed -E 's/.*_([a-zA-Z0-9_-]+)\.ipk/\1/')
+            echo "| **$arch** | \`$filename\` | \`$filesize\` | \`$sha_prefix...\` |" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 SHA-256 校验和全量列表" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+          cat dist-ipk/sha256sums.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚡ 路由器一键安装指令" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# 下载并安装 (以 x86_64 为例，其他架构替换文件名即可):" >> $GITHUB_STEP_SUMMARY
+          echo "opkg update" >> $GITHUB_STEP_SUMMARY
+          echo "opkg install /tmp/luci-app-openclash-flow_1.0.0-1_x86_64.ipk" >> $GITHUB_STEP_SUMMARY
+          echo "rm -f /tmp/luci-indexcache && /etc/init.d/rpcd restart" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 Upload IPK Packages Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-openclash-flow-ipks
+          path: |
+            dist-ipk/*.ipk
+            dist-ipk/sha256sums.txt
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 🏷️ Upload Release Assets (on Tag / Release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-ipk/*.ipk
+            dist-ipk/sha256sums.txt
+          generate_release_notes: true
+          draft: false
+          prerelease: false

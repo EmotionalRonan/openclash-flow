@@ -9,10 +9,11 @@
 [![Platform](https://img.shields.io/badge/Platform-ImmortalWRT%20%7C%20OpenWrt-blue.svg)](https://openwrt.org)
 [![LuCI Version](https://img.shields.io/badge/LuCI-21.02%20~%2024.10+-emerald.svg)](https://github.com/openwrt/luci)
 [![Architecture](https://img.shields.io/badge/Arch-x86__64%20%7C%20aarch64%20%7C%20arm%20%7C%20mips%20%7C%20all-orange.svg)](#-支持的路由器架构与产物清单)
+[![GitHub Actions CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue?logo=github-actions&logoColor=white)](#-github-actions-持续集成与自动发布)
 [![Tests](https://img.shields.io/badge/Tests-27%20Passed-brightgreen.svg)](#-自动化测试套件与用例验证)
 [![License](https://img.shields.io/badge/License-Apache%202.0-indigo.svg)](LICENSE)
 
-[功能特性](#-核心功能特性) • [架构产物](#-支持的路由器架构与产物清单) • [编译构建](#-编译构建流程) • [测试验证](#-自动化测试套件与用例验证) • [路由器安装](#-路由器安装部署指南) • [技术栈](#-技术栈)
+[功能特性](#-核心功能特性) • [架构产物](#-支持的路由器架构与产物清单) • [编译构建](#-编译构建流程) • [GitHub CI](#-github-actions-持续集成与自动发布) • [测试验证](#-自动化测试套件与用例验证) • [路由器安装](#-路由器安装部署指南) • [技术栈](#-技术栈)
 
 </div>
 
@@ -185,6 +186,30 @@ npm run build
    make package/luci-app-openclash-flow/compile V=s
    ```
    编译产物将输出在 `bin/packages/<arch>/luci/luci-app-openclash-flow_*.ipk`。
+
+---
+
+## 🤖 GitHub Actions 持续集成与自动发布
+
+本项目已配置完善的 **GitHub Actions CI/CD** 自动化工作流（`.github/workflows/build-ipk.yml`），无需本地配置编译环境即可自动获取最新架构 IPK。
+
+### 🔄 自动化触发时机
+- **代码提交 (Push)**：向 `main` 或 `master` 分支推送代码时自动触发；
+- **合并请求 (Pull Request)**：针对主分支提交 PR 时自动触发代码检查与测试；
+- **版本发布 (Release / Tag)**：发布形如 `v1.0.0` 的 Release Tag 时，自动构建并直接挂载 IPK 附件至 GitHub Release Assets；
+- **手动调度 (workflow_dispatch)**：可在 GitHub 仓库 Actions 界面随时一键手动触发构建。
+
+### ⚙️ CI 自动化流水线流程
+```text
+📥 Checkout ➔ 🟢 Setup Node 20 ➔ 📦 Install Deps ➔ 🔍 Type & Lint Check ➔ 🧪 Vitest (27 Tests) ➔ 🔨 Build 6 Arch IPKs ➔ 📊 Generate Step Summary ➔ 📤 Upload Artifacts / Release
+```
+
+### 📥 如何在 GitHub 上查看与下载生成的 IPK 产物
+
+1. 进入 GitHub 仓库页面，点击顶部 **「Actions」** 标签；
+2. 点击最新一次运行成功的 workflow（如 `Build & Test OpenClash Flow IPK Packages`）；
+3. 在运行详情页的 **「Artifacts」** 区域，直接点击 **`luci-app-openclash-flow-ipks`** 下载全架构 IPK 压缩包；
+4. 在详情页面的 **Summary 报告** 中，可直接查阅各架构产物的文件大小、SHA256 校验和及路由器一键安装指令。
 
 ---
 
