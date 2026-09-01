@@ -1,0 +1,8 @@
+Package: luci-app-openclash-flow
+Version: 1.0.0-1
+Depends: libc, luci-base, luci-compat, luci-app-openclash
+Section: luci
+Architecture: aarch64_generic
+Maintainer: OpenClash Flow Studio
+Title: OpenClash Flow Visual Rule & Infinite Canvas Orchestrator (aarch64_generic)
+Description: Visual infinite canvas rule orchestrator, step-by-step traffic simulator, and multi-protocol subscription parser for OpenClash on ImmortalWRT / OpenWrt (ARM64 / AArch64 (树莓派4/5, N1, R2S/R4S/R5S/R6S, RK3568/RK3588, MT798x)).

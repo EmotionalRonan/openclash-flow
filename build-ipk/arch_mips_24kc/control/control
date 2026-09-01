@@ -1,0 +1,8 @@
+Package: luci-app-openclash-flow
+Version: 1.0.0-1
+Depends: libc, luci-base, luci-compat, luci-app-openclash
+Section: luci
+Architecture: mips_24kc
+Maintainer: OpenClash Flow Studio
+Title: OpenClash Flow Visual Rule & Infinite Canvas Orchestrator (mips_24kc)
+Description: Visual infinite canvas rule orchestrator, step-by-step traffic simulator, and multi-protocol subscription parser for OpenClash on ImmortalWRT / OpenWrt (MIPS 32位大端 (AR9344, QCA953x, AR71xx 等)).

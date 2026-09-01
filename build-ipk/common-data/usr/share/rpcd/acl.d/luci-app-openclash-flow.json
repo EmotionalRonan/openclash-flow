@@ -1,0 +1,17 @@
+{
+  "luci-app-openclash-flow": {
+    "description": "Grant UCI and RPC access to OpenClash Flow",
+    "read": {
+      "uci": [ "openclash", "openclash_flow" ],
+      "file": {
+        "/etc/openclash/*": [ "read" ]
+      }
+    },
+    "write": {
+      "uci": [ "openclash", "openclash_flow" ],
+      "file": {
+        "/etc/openclash/*": [ "write" ]
+      }
+    }
+  }
+}

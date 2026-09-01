@@ -1,0 +1,8 @@
+Package: luci-app-openclash-flow
+Version: 1.0.0-1
+Depends: libc, luci-base, luci-compat, luci-app-openclash
+Section: luci
+Architecture: x86_64
+Maintainer: OpenClash Flow Studio
+Title: OpenClash Flow Visual Rule & Infinite Canvas Orchestrator (x86_64)
+Description: Visual infinite canvas rule orchestrator, step-by-step traffic simulator, and multi-protocol subscription parser for OpenClash on ImmortalWRT / OpenWrt (x86_64 软路由 / PC / 虚拟机 (Intel & AMD 64位)).

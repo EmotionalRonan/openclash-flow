@@ -1,0 +1,7 @@
+{
+  "name": "OpenClash Flow",
+  "description": "ImmortalWRT OpenClash visual management panel with drag-and-drop rule routing, node subscription importer, real-time log monitoring, and automated configuration generator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

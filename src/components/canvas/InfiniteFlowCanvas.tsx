@@ -1,0 +1,888 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { 
+  CanvasNodeData, 
+  CanvasEdge, 
+  StepSimulationState,
+  CanvasNodeType 
+} from '../../types/canvas';
+import { PolicyGroup, TrafficRule, ProxyNode, RuleCategoryItem, RuleType } from '../../types/openclash';
+import { CanvasNodeCard } from './CanvasNodeCard';
+import { CanvasWire } from './CanvasWire';
+import { CanvasMinimap } from './CanvasMinimap';
+import { StepSimulatorBar } from './StepSimulatorBar';
+import { CanvasPaletteDrawer } from './CanvasPaletteDrawer';
+import { 
+  ZoomIn, 
+  ZoomOut, 
+  Maximize2, 
+  Move, 
+  Sparkles, 
+  Plus, 
+  RefreshCw, 
+  Layers, 
+  Check, 
+  ShieldCheck,
+  Grid,
+  RotateCcw,
+  Zap
+} from 'lucide-react';
+
+interface InfiniteFlowCanvasProps {
+  policyGroups: PolicyGroup[];
+  setPolicyGroups: React.Dispatch<React.SetStateAction<PolicyGroup[]>>;
+  rules: TrafficRule[];
+  setRules: React.Dispatch<React.SetStateAction<TrafficRule[]>>;
+  proxies: ProxyNode[];
+}
+
+export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
+  policyGroups,
+  setPolicyGroups,
+  rules,
+  setRules,
+  proxies,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Viewport transformation: Pan and Zoom
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 40, y: 30 });
+  const [zoom, setZoom] = useState<number>(0.85);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Nodes & Edges on canvas
+  const [nodes, setNodes] = useState<CanvasNodeData[]>([]);
+  const [edges, setEdges] = useState<CanvasEdge[]>([]);
+
+  // Dragging a node
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [nodeDragOffset, setNodeDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Port Connecting Interaction
+  const [connectingPort, setConnectingPort] = useState<{
+    nodeId: string;
+    portType: 'in' | 'out';
+    startX: number;
+    startY: number;
+  } | null>(null);
+  const [connectingMousePos, setConnectingMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Palette drawer
+  const [isPaletteOpen, setIsPaletteOpen] = useState(true);
+
+  // Simulation State
+  const [simState, setSimState] = useState<StepSimulationState>({
+    isActive: false,
+    targetQuery: 'api.openai.com',
+    currentStep: 0,
+    activeNodeIds: [],
+    activeEdgeIds: [],
+    explanation: '',
+    details: {},
+  });
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+
+  // 1. Initialize Layout Algorithm to place nodes in 4 Pipeline Stage Columns
+  const autoLayoutNodes = useCallback(() => {
+    const newNodes: CanvasNodeData[] = [];
+    const newEdges: CanvasEdge[] = [];
+
+    // Step 1: Inbound Node
+    const inboundNode: CanvasNodeData = {
+      id: 'inbound-core',
+      type: 'inbound',
+      title: '局域网流量入口 (Inbound)',
+      subtitle: 'Fake-IP DNS 劫持 + TUN 虚拟网卡',
+      x: 60,
+      y: 180,
+      width: 250,
+      height: 160,
+      step: 1,
+      stepName: '流量捕获',
+    };
+    newNodes.push(inboundNode);
+
+    // Step 2: Rule Nodes (Top rules)
+    const activeRules = rules.slice(0, 7); // Display primary rules cleanly on canvas
+    activeRules.forEach((rule, idx) => {
+      const ruleNode: CanvasNodeData = {
+        id: `node-rule-${rule.id}`,
+        type: rule.id.startsWith('custom') ? 'custom-rule' : 'rule',
+        title: rule.comment || rule.payload,
+        subtitle: `匹配: ${rule.payload}`,
+        x: 440,
+        y: 40 + idx * 135,
+        width: 260,
+        height: 120,
+        step: 2,
+        stepName: '分流规则',
+        ruleType: rule.type,
+        payload: rule.payload,
+        targetGroup: rule.targetGroup,
+        enabled: rule.enabled,
+        rawId: rule.id,
+      };
+      newNodes.push(ruleNode);
+
+      // Inbound -> Rule edge
+      newEdges.push({
+        id: `edge-inbound-${rule.id}`,
+        fromNodeId: inboundNode.id,
+        fromPort: 'out',
+        toNodeId: ruleNode.id,
+        toPort: 'in',
+        color: '#475569',
+      });
+    });
+
+    // Step 3: Policy Groups
+    policyGroups.slice(0, 6).forEach((group, idx) => {
+      const groupNode: CanvasNodeData = {
+        id: `node-group-${group.id}`,
+        type: 'group',
+        title: group.name,
+        subtitle: group.description || '策略分流调度组',
+        x: 840,
+        y: 40 + idx * 145,
+        width: 260,
+        height: 130,
+        step: 3,
+        stepName: '策略调度',
+        groupType: group.type,
+        proxyCount: group.proxies.length,
+        rawId: group.id,
+      };
+      newNodes.push(groupNode);
+    });
+
+    // Step 4: Outbound Proxies
+    proxies.slice(0, 6).forEach((proxy, idx) => {
+      const outboundNode: CanvasNodeData = {
+        id: `node-proxy-${proxy.id}`,
+        type: 'outbound',
+        title: proxy.name,
+        subtitle: `${proxy.server}:${proxy.port}`,
+        x: 1240,
+        y: 40 + idx * 135,
+        width: 250,
+        height: 120,
+        step: 4,
+        stepName: '物理出口',
+        nodeType: proxy.type,
+        latency: proxy.latency,
+        flag: proxy.flag,
+        rawId: proxy.id,
+      };
+      newNodes.push(outboundNode);
+    });
+
+    // Direct and Reject sinks
+    const directSink: CanvasNodeData = {
+      id: 'node-sink-direct',
+      type: 'outbound',
+      title: '🇨🇳 DIRECT 直连',
+      subtitle: '国内流量直通 WAN 网关',
+      x: 1240,
+      y: 40 + proxies.slice(0, 6).length * 135,
+      width: 250,
+      height: 100,
+      step: 4,
+      stepName: '直连网关',
+      nodeType: 'direct',
+    };
+    newNodes.push(directSink);
+
+    // Dynamic Connections between Rules -> Groups
+    activeRules.forEach((rule) => {
+      const matchingGroup = policyGroups.find((g) => g.name === rule.targetGroup);
+      if (matchingGroup) {
+        newEdges.push({
+          id: `edge-rule-${rule.id}-group-${matchingGroup.id}`,
+          fromNodeId: `node-rule-${rule.id}`,
+          fromPort: 'out',
+          toNodeId: `node-group-${matchingGroup.id}`,
+          toPort: 'in',
+          color: '#6366f1',
+        });
+      }
+    });
+
+    // Dynamic Connections between Groups -> Outbounds
+    policyGroups.slice(0, 6).forEach((group) => {
+      group.proxies.forEach((proxyName) => {
+        const matchingProxy = proxies.find((p) => p.name === proxyName);
+        if (matchingProxy) {
+          newEdges.push({
+            id: `edge-group-${group.id}-proxy-${matchingProxy.id}`,
+            fromNodeId: `node-group-${group.id}`,
+            fromPort: 'out',
+            toNodeId: `node-proxy-${matchingProxy.id}`,
+            toPort: 'in',
+            color: '#8b5cf6',
+          });
+        } else if (proxyName === 'DIRECT') {
+          newEdges.push({
+            id: `edge-group-${group.id}-direct`,
+            fromNodeId: `node-group-${group.id}`,
+            fromPort: 'out',
+            toNodeId: directSink.id,
+            toPort: 'in',
+            color: '#0ea5e9',
+          });
+        }
+      });
+    });
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+  }, [rules, policyGroups, proxies]);
+
+  // Initial layout effect
+  useEffect(() => {
+    autoLayoutNodes();
+  }, [autoLayoutNodes]);
+
+  // Viewport Pan handlers
+  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    // Only pan if clicking canvas background directly
+    if (e.target === containerRef.current || (e.target as HTMLElement).tagName === 'svg') {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    // Panning canvas
+    if (isPanning) {
+      setPan({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y,
+      });
+    }
+
+    // Dragging a node
+    if (draggedNodeId) {
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (containerRect) {
+        // Convert screen mouse position to world coordinates taking zoom and pan into account
+        const worldX = (e.clientX - containerRect.left - pan.x) / zoom - nodeDragOffset.x;
+        const worldY = (e.clientY - containerRect.top - pan.y) / zoom - nodeDragOffset.y;
+
+        setNodes((prev) =>
+          prev.map((n) => (n.id === draggedNodeId ? { ...n, x: worldX, y: worldY } : n))
+        );
+      }
+    }
+
+    // Connecting port line
+    if (connectingPort) {
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (containerRect) {
+        const worldX = (e.clientX - containerRect.left - pan.x) / zoom;
+        const worldY = (e.clientY - containerRect.top - pan.y) / zoom;
+        setConnectingMousePos({ x: worldX, y: worldY });
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+    setDraggedNodeId(null);
+    setConnectingPort(null);
+  };
+
+  // Mouse Wheel Zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.35), 2.0);
+
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+
+    // Zoom centered towards mouse cursor
+    const mouseX = e.clientX - containerRect.left;
+    const mouseY = e.clientY - containerRect.top;
+
+    const newPanX = mouseX - (mouseX - pan.x) * (newZoom / zoom);
+    const newPanY = mouseY - (mouseY - pan.y) * (newZoom / zoom);
+
+    setZoom(newZoom);
+    setPan({ x: newPanX, y: newPanY });
+  };
+
+  // Node Drag Start
+  const handleNodeMouseDown = (e: React.MouseEvent, node: CanvasNodeData) => {
+    e.stopPropagation();
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+
+    const worldMouseX = (e.clientX - containerRect.left - pan.x) / zoom;
+    const worldMouseY = (e.clientY - containerRect.top - pan.y) / zoom;
+
+    setDraggedNodeId(node.id);
+    setNodeDragOffset({
+      x: worldMouseX - node.x,
+      y: worldMouseY - node.y,
+    });
+  };
+
+  // Port Connecting Start
+  const handlePortMouseDown = (e: React.MouseEvent, nodeId: string, portType: 'in' | 'out') => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    const startX = portType === 'out' ? node.x + node.width : node.x;
+    const startY = node.y + (node.height || 140) / 2;
+
+    setConnectingPort({ nodeId, portType, startX, startY });
+    setConnectingMousePos({ x: startX, y: startY });
+  };
+
+  // Port Connecting Drop/Complete
+  const handlePortMouseUp = (e: React.MouseEvent, targetNodeId: string, targetPortType: 'in' | 'out') => {
+    if (!connectingPort) return;
+    if (connectingPort.nodeId === targetNodeId) return; // Cannot connect to self
+
+    const sourceNode = nodes.find((n) => n.id === connectingPort.nodeId);
+    const targetNode = nodes.find((n) => n.id === targetNodeId);
+
+    if (!sourceNode || !targetNode) return;
+
+    // Validate Pipeline Step Order: Only allow Step N -> Step N+1 or connecting to next logical stages
+    let fromNode = connectingPort.portType === 'out' ? sourceNode : targetNode;
+    let toNode = connectingPort.portType === 'out' ? targetNode : sourceNode;
+
+    if (fromNode.step >= toNode.step) {
+      // Inverted or invalid connection
+      setConnectingPort(null);
+      return;
+    }
+
+    // Handle Rule -> PolicyGroup connection
+    if (fromNode.type === 'rule' || fromNode.type === 'custom-rule') {
+      if (toNode.type === 'group') {
+        const targetGroupName = toNode.title;
+        // Update OpenClash TrafficRule state
+        if (fromNode.rawId) {
+          setRules((prev) =>
+            prev.map((r) => (r.id === fromNode.rawId ? { ...r, targetGroup: targetGroupName } : r))
+          );
+        }
+        // Update local node & edge
+        setNodes((prev) =>
+          prev.map((n) => (n.id === fromNode.id ? { ...n, targetGroup: targetGroupName } : n))
+        );
+      }
+    }
+
+    // Handle PolicyGroup -> Outbound connection
+    if (fromNode.type === 'group' && toNode.type === 'outbound') {
+      const proxyName = toNode.title;
+      if (fromNode.rawId) {
+        setPolicyGroups((prev) =>
+          prev.map((g) => {
+            if (g.id === fromNode.rawId) {
+              if (!g.proxies.includes(proxyName)) {
+                return { ...g, proxies: [...g.proxies, proxyName] };
+              }
+            }
+            return g;
+          })
+        );
+      }
+    }
+
+    // Add Edge to canvas
+    const newEdgeId = `edge-${fromNode.id}-${toNode.id}-${Date.now()}`;
+    setEdges((prev) => [
+      ...prev.filter((e) => !(e.fromNodeId === fromNode.id && e.toNodeId === toNode.id)),
+      {
+        id: newEdgeId,
+        fromNodeId: fromNode.id,
+        fromPort: 'out',
+        toNodeId: toNode.id,
+        toPort: 'in',
+        color: '#10b981',
+      },
+    ]);
+
+    setConnectingPort(null);
+  };
+
+  // Delete an edge
+  const handleDeleteEdge = (edgeId: string) => {
+    setEdges((prev) => prev.filter((e) => e.id !== edgeId));
+  };
+
+  // Delete a custom rule node
+  const handleDeleteNode = (nodeId: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (node && node.rawId) {
+      setRules((prev) => prev.filter((r) => r.id !== node.rawId));
+    }
+    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
+    setEdges((prev) => prev.filter((e) => e.fromNodeId !== nodeId && e.toNodeId !== nodeId));
+  };
+
+  // Drag over canvas to drop preset from palette
+  const handleDragOverCanvas = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  // Drop preset directly onto infinite canvas
+  const handleDropOnCanvas = (e: React.DragEvent) => {
+    e.preventDefault();
+    const dataStr = e.dataTransfer.getData('text/plain');
+    if (!dataStr) return;
+
+    try {
+      const payload = JSON.parse(dataStr);
+      if (payload.type === 'preset') {
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        if (!containerRect) return;
+
+        // Calculate drop coordinates in world space
+        const dropX = (e.clientX - containerRect.left - pan.x) / zoom;
+        const dropY = (e.clientY - containerRect.top - pan.y) / zoom;
+
+        // Add as a new rule
+        const newRuleId = `custom-rule-${Date.now()}`;
+        const newRule: TrafficRule = {
+          id: newRuleId,
+          type: 'DOMAIN-SUFFIX',
+          payload: payload.id || 'custom.domain.com',
+          targetGroup: policyGroups[0]?.name || '🚀 节点选择 (PROXY)',
+          comment: payload.id,
+          enabled: true,
+          category: 'custom',
+        };
+
+        setRules((prev) => [newRule, ...prev]);
+
+        // Add node to canvas directly at drop point
+        const newNode: CanvasNodeData = {
+          id: `node-rule-${newRuleId}`,
+          type: 'custom-rule',
+          title: payload.id,
+          subtitle: `匹配: ${payload.id}`,
+          x: dropX,
+          y: dropY,
+          width: 260,
+          height: 120,
+          step: 2,
+          stepName: '分流规则',
+          ruleType: 'DOMAIN-SUFFIX',
+          payload: payload.id,
+          targetGroup: newRule.targetGroup,
+          rawId: newRuleId,
+        };
+
+        setNodes((prev) => [...prev, newNode]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Add custom rule node from Drawer
+  const handleAddCustomNode = (
+    type: RuleType,
+    payload: string,
+    title: string,
+    category: any
+  ) => {
+    const newRuleId = `custom-rule-${Date.now()}`;
+    const targetGroup = policyGroups[0]?.name || '🚀 节点选择 (PROXY)';
+    const newRule: TrafficRule = {
+      id: newRuleId,
+      type,
+      payload,
+      targetGroup,
+      comment: title,
+      enabled: true,
+      category,
+    };
+
+    setRules((prev) => [newRule, ...prev]);
+
+    // Position in Step 2 column below existing rules
+    const existingRuleNodes = nodes.filter((n) => n.step === 2);
+    const newY = existingRuleNodes.length > 0
+      ? Math.max(...existingRuleNodes.map((n) => n.y)) + 140
+      : 80;
+
+    const newNode: CanvasNodeData = {
+      id: `node-rule-${newRuleId}`,
+      type: 'custom-rule',
+      title,
+      subtitle: `${type} ${payload}`,
+      x: 440,
+      y: newY,
+      width: 260,
+      height: 120,
+      step: 2,
+      stepName: '分流规则',
+      ruleType: type,
+      payload,
+      targetGroup,
+      rawId: newRuleId,
+    };
+
+    setNodes((prev) => [...prev, newNode]);
+  };
+
+  // Step Simulation Logic
+  const startSimulation = () => {
+    const query = simState.targetQuery.trim().toLowerCase();
+    if (!query) return;
+
+    // Step 1: Inbound packet arriving
+    const inboundNode = nodes.find((n) => n.step === 1);
+    
+    // Find matching rule in Step 2
+    let matchedRuleNode = nodes.find((n) => {
+      if (n.step !== 2 || !n.payload) return false;
+      const p = n.payload.toLowerCase();
+      if (n.ruleType === 'DOMAIN-SUFFIX') return query.endsWith(p);
+      if (n.ruleType === 'DOMAIN-KEYWORD') return query.includes(p);
+      if (n.ruleType === 'DOMAIN') return query === p;
+      return false;
+    });
+
+    if (!matchedRuleNode) {
+      // Fallback to first rule or MATCH
+      matchedRuleNode = nodes.find((n) => n.step === 2);
+    }
+
+    // Step 3: Target Group
+    const targetGroupName = matchedRuleNode?.targetGroup || '🚀 节点选择 (PROXY)';
+    const matchedGroupNode = nodes.find((n) => n.step === 3 && n.title === targetGroupName) || nodes.find((n) => n.step === 3);
+
+    // Step 4: Outbound Node
+    const matchingProxyNode = nodes.find((n) => n.step === 4) || nodes.find((n) => n.type === 'outbound');
+
+    setSimState({
+      isActive: true,
+      targetQuery: query,
+      currentStep: 1,
+      activeNodeIds: inboundNode ? [inboundNode.id] : [],
+      activeEdgeIds: [],
+      explanation: `Step 1: 局域网终端发起对 ${query} 的访问请求，被 OpenClash Fake-IP DNS 劫持并分配虚拟 IP (198.18.0.42)，由 utun 网卡注入内核。`,
+      details: {
+        inbound: `Fake-IP 劫持 -> 198.18.0.42 (:443)`,
+        matchedRule: matchedRuleNode ? `${matchedRuleNode.ruleType} ${matchedRuleNode.payload}` : 'MATCH (兜底)',
+        selectedGroup: targetGroupName,
+        outboundNode: matchingProxyNode?.title || '🇭🇰 香港 IPLC 01',
+      },
+    });
+  };
+
+  const nextSimulationStep = () => {
+    const nextStep = simState.currentStep + 1;
+    if (nextStep > 4) return;
+
+    const query = simState.targetQuery;
+    const inboundNode = nodes.find((n) => n.step === 1);
+    const matchedRuleNode = nodes.find((n) => {
+      if (n.step !== 2 || !n.payload) return false;
+      const p = n.payload.toLowerCase();
+      if (n.ruleType === 'DOMAIN-SUFFIX') return query.endsWith(p);
+      if (n.ruleType === 'DOMAIN-KEYWORD') return query.includes(p);
+      return false;
+    }) || nodes.find((n) => n.step === 2);
+
+    const targetGroupName = matchedRuleNode?.targetGroup || '🚀 节点选择 (PROXY)';
+    const matchedGroupNode = nodes.find((n) => n.step === 3 && n.title === targetGroupName) || nodes.find((n) => n.step === 3);
+    const matchingProxyNode = nodes.find((n) => n.step === 4);
+
+    if (nextStep === 2) {
+      const activeEdge = edges.find(
+        (e) => e.fromNodeId === inboundNode?.id && e.toNodeId === matchedRuleNode?.id
+      );
+      setSimState((prev) => ({
+        ...prev,
+        currentStep: 2,
+        activeNodeIds: [matchedRuleNode?.id || ''],
+        activeEdgeIds: activeEdge ? [activeEdge.id] : [],
+        explanation: `Step 2: Clash 核心引擎扫描分流规则，命中 [${matchedRuleNode?.ruleType} ${matchedRuleNode?.payload}]，指定目标策略组为 [${targetGroupName}]。`,
+      }));
+    } else if (nextStep === 3) {
+      const activeEdge = edges.find(
+        (e) => e.fromNodeId === matchedRuleNode?.id && e.toNodeId === matchedGroupNode?.id
+      );
+      setSimState((prev) => ({
+        ...prev,
+        currentStep: 3,
+        activeNodeIds: [matchedGroupNode?.id || ''],
+        activeEdgeIds: activeEdge ? [activeEdge.id] : [],
+        explanation: `Step 3: 策略组 [${matchedGroupNode?.title}] 依据其调度算法 (${matchedGroupNode?.groupType})，从可用节点列表中优选最优物理出站节点。`,
+      }));
+    } else if (nextStep === 4) {
+      const activeEdge = edges.find(
+        (e) => e.fromNodeId === matchedGroupNode?.id && e.toNodeId === matchingProxyNode?.id
+      );
+      setSimState((prev) => ({
+        ...prev,
+        currentStep: 4,
+        activeNodeIds: [matchingProxyNode?.id || ''],
+        activeEdgeIds: activeEdge ? [activeEdge.id] : [],
+        explanation: `Step 4: 流量已建立加密握手，通过物理出口 [${matchingProxyNode?.title}] (实测延迟 ${matchingProxyNode?.latency || 28}ms) 发送至目标服务器！`,
+      }));
+      setIsAutoPlaying(false);
+    }
+  };
+
+  const resetSimulation = () => {
+    setIsAutoPlaying(false);
+    setSimState({
+      isActive: false,
+      targetQuery: 'api.openai.com',
+      currentStep: 0,
+      activeNodeIds: [],
+      activeEdgeIds: [],
+      explanation: '',
+      details: {},
+    });
+  };
+
+  // Auto-play interval
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isAutoPlaying && simState.isActive) {
+      if (simState.currentStep < 4) {
+        timer = setTimeout(() => {
+          nextSimulationStep();
+        }, 1400);
+      } else {
+        setIsAutoPlaying(false);
+      }
+    }
+    return () => clearTimeout(timer);
+  }, [isAutoPlaying, simState.isActive, simState.currentStep]);
+
+  return (
+    <div className="space-y-4">
+      {/* Step Simulation Controls Toolbar */}
+      <StepSimulatorBar
+        simState={simState}
+        onTargetChange={(q) => setSimState((prev) => ({ ...prev, targetQuery: q }))}
+        onStartSimulation={startSimulation}
+        onNextStep={nextSimulationStep}
+        onResetSimulation={resetSimulation}
+        onToggleAutoPlay={() => {
+          if (!simState.isActive) startSimulation();
+          setIsAutoPlaying(!isAutoPlaying);
+        }}
+        isAutoPlaying={isAutoPlaying}
+      />
+
+      {/* Main Infinite Canvas Box */}
+      <div
+        ref={containerRef}
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
+        onDragOver={handleDragOverCanvas}
+        onDrop={handleDropOnCanvas}
+        className="relative w-full h-[660px] bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden select-none cursor-default shadow-2xl"
+      >
+        {/* Floating Canvas Navigation Toolbar */}
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl shadow-xl backdrop-blur-md">
+          <button
+            onClick={() => setZoom((z) => Math.min(2.0, z + 0.15))}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title="放大画布 (Zoom In)"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setZoom((z) => Math.max(0.35, z - 0.15))}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title="缩小画布 (Zoom Out)"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              setZoom(0.85);
+              setPan({ x: 40, y: 30 });
+            }}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors font-mono text-xs font-semibold px-2"
+            title="重置缩放比例"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <div className="w-[1px] h-4 bg-slate-700 mx-0.5" />
+          <button
+            onClick={autoLayoutNodes}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"
+            title="一键根据 OpenClash 管道自动重排拓扑"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>自动整理布局</span>
+          </button>
+        </div>
+
+        {/* Side Palette Drawer */}
+        <CanvasPaletteDrawer
+          isOpen={isPaletteOpen}
+          onToggle={() => setIsPaletteOpen(!isPaletteOpen)}
+          onDragStartPreset={(e, item) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'preset', id: item.payload }));
+          }}
+          onAddCustomNode={handleAddCustomNode}
+        />
+
+        {/* Minimap Radar */}
+        <CanvasMinimap
+          nodes={nodes}
+          pan={pan}
+          zoom={zoom}
+          canvasWidth={containerRef.current?.clientWidth || 1000}
+          canvasHeight={660}
+        />
+
+        {/* Canvas World Transform Container */}
+        <div
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: '0 0',
+          }}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+        >
+          {/* Dynamic Grid Background in World Coordinates */}
+          <div
+            style={{
+              width: '3200px',
+              height: '2400px',
+              transform: 'translate(-800px, -600px)',
+              backgroundImage: `
+                radial-gradient(circle, rgba(148, 163, 184, 0.15) 1.5px, transparent 1.5px),
+                linear-gradient(to right, rgba(51, 65, 85, 0.12) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(51, 65, 85, 0.12) 1px, transparent 1px)
+              `,
+              backgroundSize: '32px 32px, 128px 128px, 128px 128px',
+            }}
+            className="absolute pointer-events-none"
+          />
+
+          {/* Pipeline Stage Column Headers & Flow Direction Indicators */}
+          <div className="absolute top-[-30px] left-0 flex gap-4 pointer-events-none text-xs font-bold font-mono select-none">
+            {/* Step 1 Header */}
+            <div style={{ transform: 'translateX(60px)', width: '250px' }} className="text-sky-400 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-sky-500/20 flex items-center justify-center text-[10px]">1</span>
+              <span>Step 1: 流量入口层</span>
+            </div>
+
+            {/* Step 2 Header */}
+            <div style={{ transform: 'translateX(340px)', width: '260px' }} className="text-indigo-400 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">2</span>
+              <span>Step 2: 规则匹配层</span>
+            </div>
+
+            {/* Step 3 Header */}
+            <div style={{ transform: 'translateX(610px)', width: '260px' }} className="text-purple-400 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-[10px]">3</span>
+              <span>Step 3: 策略调度层</span>
+            </div>
+
+            {/* Step 4 Header */}
+            <div style={{ transform: 'translateX(880px)', width: '250px' }} className="text-emerald-400 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px]">4</span>
+              <span>Step 4: 物理出口层</span>
+            </div>
+          </div>
+
+          {/* SVG Connection Layer */}
+          <svg
+            style={{ width: '3200px', height: '2400px', transform: 'translate(-800px, -600px)' }}
+            className="absolute pointer-events-auto"
+          >
+            <defs>
+              <linearGradient id="activeLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="50%" stopColor="#818cf8" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
+
+            {/* Render all Wires */}
+            {edges.map((edge) => {
+              const fromNode = nodes.find((n) => n.id === edge.fromNodeId);
+              const toNode = nodes.find((n) => n.id === edge.toNodeId);
+              const isActive = simState.activeEdgeIds.includes(edge.id);
+
+              return (
+                <CanvasWire
+                  key={edge.id}
+                  edge={edge}
+                  fromNode={fromNode}
+                  toNode={toNode}
+                  isActive={isActive}
+                  onDeleteEdge={handleDeleteEdge}
+                />
+              );
+            })}
+
+            {/* Currently Dragging Bezier Link */}
+            {connectingPort && (
+              <path
+                d={`M ${connectingPort.startX} ${connectingPort.startY} C ${
+                  connectingPort.startX + 60
+                } ${connectingPort.startY}, ${connectingMousePos.x - 60} ${
+                  connectingMousePos.y
+                }, ${connectingMousePos.x} ${connectingMousePos.y}`}
+                fill="none"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                strokeDasharray="4,4"
+                className="animate-pulse"
+              />
+            )}
+          </svg>
+
+          {/* Nodes Layer */}
+          <div className="pointer-events-auto">
+            {nodes.map((node) => {
+              const isActiveInSimulation = simState.activeNodeIds.includes(node.id);
+
+              return (
+                <CanvasNodeCard
+                  key={node.id}
+                  node={node}
+                  isSelected={false}
+                  isActiveInSimulation={isActiveInSimulation}
+                  simulationStep={simState.currentStep}
+                  onMouseDown={handleNodeMouseDown}
+                  onPortMouseDown={handlePortMouseDown}
+                  onPortMouseUp={handlePortMouseUp}
+                  onDeleteNode={handleDeleteNode}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bottom Helper Bar */}
+        <div className="absolute bottom-3 left-4 z-20 flex items-center gap-3 text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-sm pointer-events-none">
+          <span className="flex items-center gap-1 text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-indigo-400" />
+            空白处拖拽平移画布
+          </span>
+          <span className="text-slate-600">|</span>
+          <span className="flex items-center gap-1 text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            按住卡片右侧端口可拉线连接到下一步
+          </span>
+          <span className="text-slate-600">|</span>
+          <span className="flex items-center gap-1 text-slate-300">
+            滚轮放大/缩小
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};

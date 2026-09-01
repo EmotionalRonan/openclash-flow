@@ -1,0 +1,8 @@
+Package: luci-app-openclash-flow
+Version: 1.0.0-1
+Depends: libc, luci-base, luci-compat, luci-app-openclash
+Section: luci
+Architecture: arm_cortex-a7_neon-vfpv4
+Maintainer: OpenClash Flow Studio
+Title: OpenClash Flow Visual Rule & Infinite Canvas Orchestrator (arm_cortex-a7_neon-vfpv4)
+Description: Visual infinite canvas rule orchestrator, step-by-step traffic simulator, and multi-protocol subscription parser for OpenClash on ImmortalWRT / OpenWrt (ARMv7 32位 (IPQ40xx, GL.iNet, 华硕等)).

@@ -1,0 +1,5 @@
+config openclash_flow 'global'
+	option enabled '1'
+	option listen_port '3000'
+	option auto_sync '1'
+	option default_view 'canvas'

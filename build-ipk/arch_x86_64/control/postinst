@@ -1,0 +1,11 @@
+#!/bin/sh
+[ -n "${IPKG_INSTROOT}" ] || {
+    rm -f /tmp/luci-indexcache 2>/dev/null || true
+    rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
+    /etc/init.d/rpcd restart 2>/dev/null || true
+    echo "=================================================="
+    echo " OpenClash Flow 拓扑编排插件已成功安装！"
+    echo " 请在 LuCI Web 管理界面 -> 服务 -> OpenClash Flow 访问。"
+    echo "=================================================="
+    exit 0
+}
