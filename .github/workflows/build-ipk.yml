@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 🟢 Setup Node.js 20.x
         uses: actions/setup-node@v4
@@ -127,17 +129,63 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      - name: 🏷️ Upload Release Assets (on Tag or Continuous Release)
+      - name: 🏷️ Determine Release Tag Name
+        id: release_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # 如果是手动打的 tag，则直接使用该 tag
+            TAG_NAME="${{ github.ref_name }}"
+            RELEASE_NAME="Release ${TAG_NAME}"
+          else
+            # 依据东八区 (北京时间/UTC+8) 或 UTC 日期生成基础 tag: YYYY.MM.DD
+            DATE_STR=$(TZ='Asia/Shanghai' date +'%Y.%m.%d')
+            
+            # 使用 GitHub CLI 获取远程已有的 tags 列表，计算当日递增序号
+            EXISTING_TAGS=$(gh tag list --limit 100 2>/dev/null || git tag -l)
+            
+            # 匹配形如 2026.09.01 或 2026.09.01-1, 2026.09.01-2...
+            MATCHING_SUFFIXES=$(echo "$EXISTING_TAGS" | grep -E "^${DATE_STR}(-[0-9]+)?$" || true)
+            
+            if [ -z "$MATCHING_SUFFIXES" ]; then
+              TAG_NAME="${DATE_STR}"
+            else
+              # 统计当日已有的 tag 最大递增数
+              MAX_NUM=0
+              while IFS= read -r line; do
+                if [ "$line" = "$DATE_STR" ]; then
+                  if [ $MAX_NUM -lt 1 ]; then MAX_NUM=1; fi
+                elif [[ "$line" =~ ^${DATE_STR}-([0-9]+)$ ]]; then
+                  NUM="${BASH_REMATCH[1]}"
+                  if [ "$NUM" -gt "$MAX_NUM" ]; then
+                    MAX_NUM=$NUM
+                  fi
+                fi
+              done <<< "$MATCHING_SUFFIXES"
+              
+              NEXT_NUM=$((MAX_NUM + 1))
+              TAG_NAME="${DATE_STR}-${NEXT_NUM}"
+            fi
+            
+            RELEASE_NAME="OpenClash Flow ${TAG_NAME}"
+          fi
+          
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+          echo "Generated Tag: ${TAG_NAME} | Name: ${RELEASE_NAME}"
+
+      - name: 🏷️ Upload Release Assets (on Tag or Branch Push)
         if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'latest' }}
-          name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'OpenClash Flow Latest IPKs' }}
+          tag_name: ${{ steps.release_tag.outputs.tag_name }}
+          name: ${{ steps.release_tag.outputs.release_name }}
           files: |
             dist-ipk/*.ipk
             dist-ipk/sha256sums.txt
           generate_release_notes: true
           draft: false
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          prerelease: false
