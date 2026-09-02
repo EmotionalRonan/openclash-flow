@@ -123,9 +123,6 @@ cat << 'EOF' > "${TARGET_LUCI_MENU}/luci-app-openclash-flow.json"
     "action": {
       "type": "view",
       "path": "openclash_flow/index"
-    },
-    "depends": {
-      "acl": [ "luci-app-openclash-flow" ]
     }
   }
 }
@@ -136,7 +133,6 @@ mkdir -p "${TARGET_LUCI_JS_VIEW}"
 cat << 'EOF' > "${TARGET_LUCI_JS_VIEW}/index.js"
 'use strict';
 'require view';
-'require dom';
 
 return view.extend({
     render: function() {
@@ -243,7 +239,7 @@ for ARCH in "${BUILD_ARCHS[@]}"; do
   cat << EOF > "${ARCH_BUILD_DIR}/control/control"
 Package: ${PKG_NAME}
 Version: ${PKG_VERSION}
-Depends: libc, luci-base, luci-compat
+Depends: libc, luci-base
 Section: luci
 Architecture: ${ARCH}
 Maintainer: OpenClash Flow Studio
@@ -255,7 +251,7 @@ EOF
   cat << 'EOF' > "${ARCH_BUILD_DIR}/control/postinst"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
-    rm -f /tmp/luci-indexcache 2>/dev/null || true
+    rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
     rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
     /etc/init.d/rpcd restart 2>/dev/null || true
     /etc/init.d/uhttpd restart 2>/dev/null || true
@@ -273,7 +269,8 @@ EOF
   cat << 'EOF' > "${ARCH_BUILD_DIR}/control/prerm"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
-    rm -f /tmp/luci-indexcache 2>/dev/null || true
+    rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
+    rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
     exit 0
 }
 EOF
@@ -286,9 +283,12 @@ EOF
   # 写入 debian-binary 2.0
   echo "2.0" > "${ARCH_BUILD_DIR}/debian-binary"
 
-  # 封装生成 IPK 压缩包
+  # 将 data.tar.gz 拷贝至架构目录根部确保标准 IPK 扁平结构
+  cp "${BUILD_ROOT}/data.tar.gz" "${ARCH_BUILD_DIR}/data.tar.gz"
+
+  # 封装生成标准 IPK 归档
   cd "${ARCH_BUILD_DIR}"
-  tar -czf "${OUT_DIR}/${IPK_NAME}" ./debian-binary ./control.tar.gz "${BUILD_ROOT}/data.tar.gz"
+  tar -czf "${OUT_DIR}/${IPK_NAME}" ./debian-binary ./control.tar.gz ./data.tar.gz
 
   SIZE=$(ls -lh "${OUT_DIR}/${IPK_NAME}" | awk '{print $5}')
   echo "     ✅ 产物: ${IPK_NAME} (${SIZE})"
