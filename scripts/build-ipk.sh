@@ -69,17 +69,13 @@ TARGET_WWW="${COMMON_DATA_DIR}/www/luci-static/resources/openclash-flow"
 mkdir -p "${TARGET_WWW}"
 cp -r "${WORK_DIR}/dist/"* "${TARGET_WWW}/"
 
-# B. LuCI Controller /usr/lib/lua/luci/controller/openclash_flow.lua
+# B. LuCI Controller /usr/lib/lua/luci/controller/openclash_flow.lua (兼容 OpenWrt 18.06 / 19.07 及 luci-compat)
 TARGET_CONTROLLER="${COMMON_DATA_DIR}/usr/lib/lua/luci/controller"
 mkdir -p "${TARGET_CONTROLLER}"
 cat << 'EOF' > "${TARGET_CONTROLLER}/openclash_flow.lua"
 module("luci.controller.openclash_flow", package.seeall)
 
 function index()
-    if not nixio.fs.access("/etc/config/openclash") and not nixio.fs.access("/etc/config/openclash_flow") then
-        return
-    end
-
     local page = entry({"admin", "services", "openclash_flow"}, template("openclash_flow/index"), _("OpenClash 拓扑编排"), 65)
     page.dependent = true
     page.acl_depends = { "luci-app-openclash-flow" }
@@ -115,20 +111,63 @@ function action_sync_config()
 end
 EOF
 
-# C. LuCI View Template
+# C. LuCI 21.02 / 22.03 / 23.05+ Modern LuCI JS View & Menu.d
+# (现代 OpenWrt/ImmortalWRT 原生菜单注册)
+TARGET_LUCI_MENU="${COMMON_DATA_DIR}/usr/share/luci/menu.d"
+mkdir -p "${TARGET_LUCI_MENU}"
+cat << 'EOF' > "${TARGET_LUCI_MENU}/luci-app-openclash-flow.json"
+{
+  "admin/services/openclash_flow": {
+    "title": "OpenClash 拓扑编排",
+    "order": 65,
+    "action": {
+      "type": "view",
+      "path": "openclash_flow/index"
+    },
+    "depends": {
+      "acl": [ "luci-app-openclash-flow" ]
+    }
+  }
+}
+EOF
+
+TARGET_LUCI_JS_VIEW="${COMMON_DATA_DIR}/www/luci-static/resources/view/openclash_flow"
+mkdir -p "${TARGET_LUCI_JS_VIEW}"
+cat << 'EOF' > "${TARGET_LUCI_JS_VIEW}/index.js"
+'use strict';
+'require view';
+'require dom';
+
+return view.extend({
+    render: function() {
+        return E('div', { 'class': 'cbi-map', 'id': 'cbi-openclash-flow', 'style': 'padding: 0; margin: 0;' }, [
+            E('iframe', {
+                'src': '/luci-static/resources/openclash-flow/index.html',
+                'style': 'width: 100%; height: calc(100vh - 120px); min-height: 800px; border: 1px solid #1e293b; border-radius: 12px; background: #020617; display: block; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);',
+                'title': 'OpenClash Flow Canvas'
+            })
+        ]);
+    },
+    handleSaveApply: null,
+    handleSave: null,
+    handleReset: null
+});
+EOF
+
+# D. LuCI View Template (供 Legacy LuCI / luci-compat 模板引擎备用)
 TARGET_VIEW="${COMMON_DATA_DIR}/usr/lib/lua/luci/view/openclash_flow"
 mkdir -p "${TARGET_VIEW}"
 cat << 'EOF' > "${TARGET_VIEW}/index.htm"
 <%+header%>
 <div class="cbi-map" id="cbi-openclash-flow">
-    <div style="width:100%; height:calc(100vh - 180px); min-height:850px; border-radius:12px; overflow:hidden; border:1px solid #1e293b; background:#020617; position:relative;">
+    <div style="width:100%; height:calc(100vh - 150px); min-height:800px; border-radius:12px; overflow:hidden; border:1px solid #1e293b; background:#020617; position:relative;">
         <iframe src="/luci-static/resources/openclash-flow/index.html" style="width:100%; height:100%; border:none; display:block;" title="OpenClash Flow Canvas"></iframe>
     </div>
 </div>
 <%+footer%>
 EOF
 
-# D. LuCI RPCD ACL
+# E. LuCI RPCD ACL 权限注册
 TARGET_ACL="${COMMON_DATA_DIR}/usr/share/rpcd/acl.d"
 mkdir -p "${TARGET_ACL}"
 cat << 'EOF' > "${TARGET_ACL}/luci-app-openclash-flow.json"
@@ -139,7 +178,8 @@ cat << 'EOF' > "${TARGET_ACL}/luci-app-openclash-flow.json"
       "uci": [ "openclash", "openclash_flow" ],
       "file": {
         "/etc/openclash/*": [ "read" ]
-      }
+      },
+      "luci": [ "admin/services/openclash_flow" ]
     },
     "write": {
       "uci": [ "openclash", "openclash_flow" ],
@@ -151,7 +191,7 @@ cat << 'EOF' > "${TARGET_ACL}/luci-app-openclash-flow.json"
 }
 EOF
 
-# E. UCI 默认配置
+# F. UCI 默认配置
 TARGET_ETC_CONFIG="${COMMON_DATA_DIR}/etc/config"
 mkdir -p "${TARGET_ETC_CONFIG}"
 cat << 'EOF' > "${TARGET_ETC_CONFIG}/openclash_flow"
@@ -162,7 +202,7 @@ config openclash_flow 'global'
 	option default_view 'canvas'
 EOF
 
-# F. CLI 工具
+# G. CLI 工具
 TARGET_BIN="${COMMON_DATA_DIR}/usr/bin"
 mkdir -p "${TARGET_BIN}"
 cat << 'EOF' > "${TARGET_BIN}/openclash-flow-cli"
@@ -203,7 +243,7 @@ for ARCH in "${BUILD_ARCHS[@]}"; do
   cat << EOF > "${ARCH_BUILD_DIR}/control/control"
 Package: ${PKG_NAME}
 Version: ${PKG_VERSION}
-Depends: libc, luci-base, luci-compat, luci-app-openclash
+Depends: libc, luci-base, luci-compat
 Section: luci
 Architecture: ${ARCH}
 Maintainer: OpenClash Flow Studio
@@ -218,9 +258,11 @@ EOF
     rm -f /tmp/luci-indexcache 2>/dev/null || true
     rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
     /etc/init.d/rpcd restart 2>/dev/null || true
+    /etc/init.d/uhttpd restart 2>/dev/null || true
     echo "=================================================="
     echo " OpenClash Flow 拓扑编排插件已成功安装！"
-    echo " 请在 LuCI Web 管理界面 -> 服务 -> OpenClash Flow 访问。"
+    echo " 请在 LuCI Web 管理界面 -> 服务 (Services) -> OpenClash 拓扑编排 访问。"
+    echo " (若未立即出现，请按 Ctrl+F5 强制刷新网页或重新登录)"
     echo "=================================================="
     exit 0
 }
