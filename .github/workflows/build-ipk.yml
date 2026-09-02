@@ -71,25 +71,73 @@ jobs:
           echo "rm -f /tmp/luci-indexcache && /etc/init.d/rpcd restart" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-      - name: 📤 Upload IPK Packages Artifacts
+      - name: 📤 Upload [all] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow-ipks
-          path: |
-            dist-ipk/*.ipk
-            dist-ipk/sha256sums.txt
+          name: luci-app-openclash-flow_1.0.0-1_all.ipk
+          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_all.ipk
           retention-days: 30
           if-no-files-found: error
 
-      - name: 🏷️ Upload Release Assets (on Tag / Release)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: 📤 Upload [x86_64] Architecture IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-openclash-flow_1.0.0-1_x86_64.ipk
+          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_x86_64.ipk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 📤 Upload [aarch64_generic] Architecture IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk
+          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 📤 Upload [arm_cortex-a7_neon-vfpv4] Architecture IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk
+          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 📤 Upload [mips_24kc] Architecture IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk
+          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 📤 Upload [mipsel_24kc] Architecture IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk
+          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 📤 Upload SHA256 Checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: sha256sums.txt
+          path: dist-ipk/sha256sums.txt
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 🏷️ Upload Release Assets (on Tag or Continuous Release)
+        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'OpenClash Flow Latest IPKs' }}
           files: |
             dist-ipk/*.ipk
             dist-ipk/sha256sums.txt
           generate_release_notes: true
           draft: false
-          prerelease: false
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
