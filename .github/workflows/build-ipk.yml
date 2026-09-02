@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: 📦 Install dependencies
-        run: npm ci || npm install
+        run: npm install
 
       - name: 🔍 TypeScript & Linter check
         run: npm run lint
@@ -84,6 +84,8 @@ jobs:
       - name: 🏷️ Upload Release Assets (on Tag / Release)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
             dist-ipk/*.ipk

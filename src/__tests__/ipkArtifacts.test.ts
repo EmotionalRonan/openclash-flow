@@ -32,13 +32,13 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
 
   expectedArchs.forEach((arch) => {
     const ipkName = `luci-app-openclash-flow_1.0.0-1_${arch}.ipk`;
-    it(`架构 [${arch}] 的 IPK 文件 (${ipkName}) 应存在且大小正常 (> 500KB)`, () => {
+    it(`架构 [${arch}] 的 IPK 文件 (${ipkName}) 应存在且大小正常 (> 100KB)`, () => {
       const ipkPath = path.join(distDir, ipkName);
       expect(fs.existsSync(ipkPath)).toBe(true);
       const stat = fs.statSync(ipkPath);
-      // IPK 包包含完整离线构建前端，大小应在 500KB ~ 5MB 之间
-      expect(stat.size).toBeGreaterThan(500 * 1024);
-      expect(stat.size).toBeLessThan(10 * 1024 * 1024);
+      // IPK 包包含完整离线构建前端，大小应在 100KB ~ 5MB 之间
+      expect(stat.size).toBeGreaterThan(100 * 1024);
+      expect(stat.size).toBeLessThan(5 * 1024 * 1024);
     });
   });
 

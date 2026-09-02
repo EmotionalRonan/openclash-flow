@@ -234,7 +234,7 @@ npx vitest
 | **1. 协议解析器** | `src/__tests__/parser.test.ts` | <li>节点名称与国旗 Emoji 智能识别匹配 (`HK/JP/US/TW/SG/UK/DE/UN`)</li><li>Shadowsocks (`ss://`) 密码与加密算法解析</li><li>VLESS Reality (`vless://`) 密钥、ShortID 与流控解析</li><li>Hysteria 2 (`hy2://`) 握手参数与端口解析</li><li>Trojan (`trojan://`) 协议解析与异常 URL 编码容错</li><li>Clash YAML 多节点文本解析与 Base64 订阅解码</li> | 6 项通过 |
 | **2. 规则分流引擎** | `src/__tests__/ruleMatcher.test.ts` | <li>IPv4 / IPv6 地址格式合法性判定 (`isIpAddress`)</li><li>CIDR 掩码及子网范围计算 (`isIpInCidr`)</li><li>`DOMAIN-SUFFIX` 域名后缀匹配与策略组跳转</li><li>`DOMAIN-KEYWORD` 关键词匹配与 `url-test` 自动测速优选</li><li>`DOMAIN` 绝对匹配与 `REJECT` 拦截阻断</li><li>`GEOIP CN` 大陆流量识别与 `DIRECT` 直连出站</li><li>`MATCH` 兜底全量规则级联路由</li> | 7 项通过 |
 | **3. 配置生成器** | `src/__tests__/configGenerator.test.ts` | <li>Clash Meta / Mihomo 标准 YAML 结构完整性输出校验</li><li>DNS Fake-IP 模式与 TUN 堆栈配置生成</li><li>ImmortalWRT UCI Shell 脚本生成及参数校验</li> | 2 项通过 |
-| **4. 多架构 IPK 产物** | `src/__tests__/ipkArtifacts.test.ts` | <li>校验全部 6 种硬件架构 (`all/x86_64/aarch64/arm/mipsel/mips`) IPK 是否全部构建生成</li><li>校验各架构 IPK 离线包体积处于合规范围 (`> 500KB`)</li><li>校验 `sha256sums.txt` 完整性与哈希一致性</li> | 8 项通过 |
+| **4. 多架构 IPK 产物** | `src/__tests__/ipkArtifacts.test.ts` | <li>校验全部 6 种硬件架构 (`all/x86_64/aarch64/arm/mipsel/mips`) IPK 是否全部构建生成</li><li>校验各架构 IPK 离线包体积处于合规范围 (`100KB ~ 5MB`)</li><li>校验 `sha256sums.txt` 完整性与哈希一致性</li> | 8 项通过 |
 | **5. 端到端集成测试** | `src/__tests__/presetsAndIntegration.test.ts` | <li>初始拓扑数据与策略组要素完整性校验</li><li>混编多协议订阅文本一键批量解析</li><li>主流业务全链路仿真（AI、海外流媒体、游戏、广告拦截、内网直连）</li><li>YAML 编译导出与再次逆向导入的无损一致性测试</li> | 4 项通过 |
 
 ### 📊 典型测试输出示例

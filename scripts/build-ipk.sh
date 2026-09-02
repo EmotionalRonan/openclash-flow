@@ -47,13 +47,15 @@ echo "🔢 版本号: ${PKG_VERSION}"
 echo "🎯 目标架构: ${BUILD_ARCHS[*]}"
 echo "============================================================"
 
-# 1. 编译前端生产静态资源
+# 1. 清理历史构建并编译前端生产静态资源
 echo ""
 echo "⚙️ [1/4] 编译前端单页应用 (Vite build)..."
+rm -rf "${WORK_DIR}/dist" "${OUT_DIR}" "${BUILD_ROOT}"
+rm -f "${PUBLIC_DIR}"/*.ipk "${PUBLIC_DIR}/sha256sums.txt"
+
 npm run build
 
-rm -rf "${OUT_DIR}"
-mkdir -p "${OUT_DIR}" "${PUBLIC_DIR}"
+mkdir -p "${OUT_DIR}"
 
 # 2. 准备公共 data 目录结构 (LuCI 控制器与静态文件)
 echo ""
@@ -246,13 +248,6 @@ EOF
   cd "${ARCH_BUILD_DIR}"
   tar -czf "${OUT_DIR}/${IPK_NAME}" ./debian-binary ./control.tar.gz "${BUILD_ROOT}/data.tar.gz"
 
-  # 同步到 public 目录供前端直接提供单架构下载
-  cp "${OUT_DIR}/${IPK_NAME}" "${PUBLIC_DIR}/${IPK_NAME}"
-  
-  if [ "${ARCH}" = "all" ]; then
-    cp "${OUT_DIR}/${IPK_NAME}" "${PUBLIC_DIR}/${PKG_NAME}_latest_all.ipk"
-  fi
-
   SIZE=$(ls -lh "${OUT_DIR}/${IPK_NAME}" | awk '{print $5}')
   echo "     ✅ 产物: ${IPK_NAME} (${SIZE})"
 done
@@ -262,7 +257,6 @@ echo ""
 echo "🔒 [4/4] 计算生成 SHA256 校验和清单..."
 cd "${OUT_DIR}"
 sha256sum *.ipk > "${OUT_DIR}/sha256sums.txt"
-cp "${OUT_DIR}/sha256sums.txt" "${PUBLIC_DIR}/sha256sums.txt"
 
 echo ""
 echo "============================================================"
