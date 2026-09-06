@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { OpenClashSettings } from '../types/openclash';
 import { useTheme } from '../context/ThemeContext';
+import { APP_VERSION } from '../version';
 
 interface HeaderProps {
   activeTab: string;
@@ -70,6 +71,9 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] border border-black/[0.06] dark:border-white/[0.08] tracking-wider uppercase shrink-0">
                   ImmortalWRT
+                </span>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-400/20 shrink-0 font-mono">
+                  v{APP_VERSION}
                 </span>
               </div>
               <p className="text-[11px] text-[#86868b] hidden xl:block tracking-tight truncate">

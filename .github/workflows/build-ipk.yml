@@ -24,13 +24,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🟢 Setup Node.js 20.x
+      - name: 🟢 Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: 📦 Install dependencies
         run: npm install
+
+      - name: 🔢 Extract Single Source of Truth Version
+        id: pkg_meta
+        run: |
+          node ./scripts/sync-version.js
+          VERSION=$(node -p "require('./version.json').version")
+          RELEASE=$(node -p "require('./version.json').release")
+          FULL_VER="${VERSION}-${RELEASE}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "release=${RELEASE}" >> $GITHUB_OUTPUT
+          echo "full_version=${FULL_VER}" >> $GITHUB_OUTPUT
+          echo "Current package version resolved: ${FULL_VER}"
 
       - name: 🔍 TypeScript & Linter check
         run: npm run lint
@@ -40,12 +52,12 @@ jobs:
 
       - name: 🔨 Build Multi-Architecture IPKs Matrix
         run: |
-          chmod +x ./scripts/build-ipk.sh ./scripts/ipkg-build
+          chmod +x ./scripts/build-ipk.sh ./scripts/ipkg-build ./scripts/sync-version.js
           npm run build:ipk
 
       - name: 📊 Generate Build Summary
         run: |
-          echo "## 🚀 OpenClash Flow IPK Build Matrix" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 OpenClash Flow IPK Build Matrix (v${{ steps.pkg_meta.outputs.full_version }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| 架构 (Architecture) | 软件包文件名 | 文件大小 | SHA256 校验和 (前16位) |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
@@ -69,55 +81,55 @@ jobs:
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "# 下载并安装 (以 x86_64 为例，其他架构替换文件名即可):" >> $GITHUB_STEP_SUMMARY
           echo "opkg update" >> $GITHUB_STEP_SUMMARY
-          echo "opkg install /tmp/luci-app-openclash-flow_1.0.0-1_x86_64.ipk" >> $GITHUB_STEP_SUMMARY
-          echo "rm -f /tmp/luci-indexcache && /etc/init.d/rpcd restart" >> $GITHUB_STEP_SUMMARY
+          echo "opkg install --force-reinstall --force-overwrite /tmp/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_x86_64.ipk" >> $GITHUB_STEP_SUMMARY
+          echo "rm -rf /tmp/luci-*cache && /etc/init.d/rpcd restart && /etc/init.d/uhttpd restart" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: 📤 Upload [all] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow_1.0.0-1_all.ipk
-          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_all.ipk
+          name: luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_all.ipk
+          path: dist-ipk/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_all.ipk
           retention-days: 30
           if-no-files-found: error
 
       - name: 📤 Upload [x86_64] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow_1.0.0-1_x86_64.ipk
-          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_x86_64.ipk
+          name: luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_x86_64.ipk
+          path: dist-ipk/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_x86_64.ipk
           retention-days: 30
           if-no-files-found: error
 
       - name: 📤 Upload [aarch64_generic] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk
-          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk
+          name: luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_aarch64_generic.ipk
+          path: dist-ipk/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_aarch64_generic.ipk
           retention-days: 30
           if-no-files-found: error
 
       - name: 📤 Upload [arm_cortex-a7_neon-vfpv4] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk
-          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk
+          name: luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_arm_cortex-a7_neon-vfpv4.ipk
+          path: dist-ipk/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_arm_cortex-a7_neon-vfpv4.ipk
           retention-days: 30
           if-no-files-found: error
 
       - name: 📤 Upload [mips_24kc] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk
-          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk
+          name: luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_mips_24kc.ipk
+          path: dist-ipk/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_mips_24kc.ipk
           retention-days: 30
           if-no-files-found: error
 
       - name: 📤 Upload [mipsel_24kc] Architecture IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk
-          path: dist-ipk/luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk
+          name: luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_mipsel_24kc.ipk
+          path: dist-ipk/luci-app-openclash-flow_${{ steps.pkg_meta.outputs.full_version }}_mipsel_24kc.ipk
           retention-days: 30
           if-no-files-found: error
 
@@ -168,7 +180,7 @@ jobs:
               TAG_NAME="${DATE_STR}-${NEXT_NUM}"
             fi
             
-            RELEASE_NAME="OpenClash Flow ${TAG_NAME}"
+            RELEASE_NAME="OpenClash Flow v${{ steps.pkg_meta.outputs.full_version }} (${TAG_NAME})"
           fi
           
           echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT

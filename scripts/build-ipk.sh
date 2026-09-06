@@ -1,10 +1,27 @@
 #!/bin/bash
 set -e
 
-PKG_NAME="luci-app-openclash-flow"
-PKG_VERSION="1.0.1-1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# ============================================================
+# 单一真相源读取：优先从 version.json 动态解析版本信息
+# ============================================================
+if [ -f "${WORK_DIR}/version.json" ]; then
+  BASE_VER=$(grep -o '"version": *"[^"]*"' "${WORK_DIR}/version.json" | cut -d'"' -f4)
+  PKG_REL=$(grep -o '"release": *"[^"]*"' "${WORK_DIR}/version.json" | cut -d'"' -f4)
+  PKG_NAME_JSON=$(grep -o '"name": *"[^"]*"' "${WORK_DIR}/version.json" | cut -d'"' -f4)
+  if [ -n "${BASE_VER}" ] && [ -n "${PKG_REL}" ]; then
+    PKG_VERSION="${BASE_VER}-${PKG_REL}"
+  fi
+  if [ -n "${PKG_NAME_JSON}" ]; then
+    PKG_NAME="${PKG_NAME_JSON}"
+  fi
+fi
+
+PKG_NAME="${PKG_NAME:-luci-app-openclash-flow}"
+PKG_VERSION="${PKG_VERSION:-1.0.1-1}"
+
 BUILD_ROOT="${WORK_DIR}/build-ipk"
 OUT_DIR="${WORK_DIR}/dist-ipk"
 PUBLIC_DIR="${WORK_DIR}/public"
@@ -94,7 +111,7 @@ function action_status()
     luci.http.write_json({
         status = "ok",
         openclash_enabled = (enabled == "1"),
-        version = "1.0.0-1"
+        version = "__PKG_VERSION__"
     })
 end
 
@@ -146,7 +163,7 @@ return view.extend({
             E('div', { 'style': 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 2px;' }, [
                 E('div', { 'style': 'display: flex; align-items: center; gap: 8px;' }, [
                     E('span', { 'style': 'font-weight: 700; font-size: 15px; color: #f8fafc;' }, [ _('OpenClash Flow 智能拓扑编排') ]),
-                    E('span', { 'class': 'badge', 'style': 'font-size: 11px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;' }, [ 'v1.0.1' ])
+                    E('span', { 'class': 'badge', 'style': 'font-size: 11px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;' }, [ 'v__PKG_VERSION__' ])
                 ]),
                 E('div', { 'style': 'display: flex; align-items: center; gap: 8px;' }, [
                     E('button', {
@@ -190,7 +207,7 @@ cat << 'EOF' > "${TARGET_VIEW}/index.htm"
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 2px;">
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-weight: 700; font-size: 15px;">OpenClash Flow 智能拓扑编排</span>
-            <span style="font-size: 11px; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;">v1.0.1</span>
+            <span style="font-size: 11px; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;">v__PKG_VERSION__</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
             <button onclick="document.getElementById('openclash-flow-frame').src='<%=resource%>/openclash-flow/index.html?v='+Date.now()" class="cbi-button" style="font-size: 12px; padding: 4px 10px; border-radius: 6px;">
@@ -242,7 +259,7 @@ mkdir -p "${TARGET_BIN}"
 cat << 'EOF' > "${TARGET_BIN}/openclash-flow-cli"
 #!/bin/sh
 # OpenClash Flow Command Line Tool
-echo "OpenClash Flow CLI v1.0.0"
+echo "OpenClash Flow CLI v__PKG_VERSION__"
 case "$1" in
     status)
         /etc/init.d/openclash status 2>/dev/null || echo "OpenClash status check..."
@@ -257,6 +274,12 @@ esac
 exit 0
 EOF
 chmod +x "${TARGET_BIN}/openclash-flow-cli"
+
+# 统一进行版本占位符替换，杜绝任何硬编码残留
+sed -i "s/__PKG_VERSION__/${PKG_VERSION}/g" "${TARGET_CONTROLLER}/openclash_flow.lua"
+sed -i "s/__PKG_VERSION__/${PKG_VERSION}/g" "${TARGET_LUCI_JS_VIEW}/index.js"
+sed -i "s/__PKG_VERSION__/${PKG_VERSION}/g" "${TARGET_VIEW}/index.htm"
+sed -i "s/__PKG_VERSION__/${PKG_VERSION}/g" "${TARGET_BIN}/openclash-flow-cli"
 
 # 3. 针对各架构分别打包专属 IPK (使用 OpenWrt 官方标准 ipkg-build)
 echo ""

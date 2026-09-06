@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { OpenClashSettings, ProxyNode, PolicyGroup, TrafficRule } from '../types/openclash';
 import { generateOpenClashYaml, generateImmortalWrtUciScript } from '../utils/parser';
+import { APP_VERSION, FULL_VERSION } from '../version';
 
 interface ConfigGeneratorProps {
   settings: OpenClashSettings;
@@ -77,9 +78,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: '推荐',
       desc: '纯脚本与静态资产，适用于所有 OpenWrt / ImmortalWRT 架构设备',
       devices: '通用全平台 (x86_64, ARM64, MIPS, ARMv7 等)',
-      file: 'luci-app-openclash-flow_1.0.1-1_all.ipk',
-      size: '1.4 MB',
-      sha256: 'c4ea70c0b93e1d749e74f406470cceae6757bca05c22f9741f4812c69378ba04'
+      file: `luci-app-openclash-flow_${FULL_VERSION}_all.ipk`,
+      size: '265 KB',
+      sha256: 'b9bb925cea8c3b159c07ca9fc240e57317413a50e513cd9638a73c0ed939bc86'
     },
     {
       id: 'x86_64',
@@ -87,9 +88,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: '64-bit',
       desc: 'Intel / AMD 64位软路由平台、PVE、ESXi、VMware、Docker',
       devices: 'J4125, N5105, N100, i3/i5/i7, 锐龙等软路由',
-      file: 'luci-app-openclash-flow_1.0.1-1_x86_64.ipk',
-      size: '1.4 MB',
-      sha256: '391f8347aebf901d25c48e2f3881273914e4eb5fb37cc5938459515b3f0f101d'
+      file: `luci-app-openclash-flow_${FULL_VERSION}_x86_64.ipk`,
+      size: '265 KB',
+      sha256: '0ec44ad7a3773e3c27d473b5dde03bf48ea9770cf7bc81903844b8d2eb372975'
     },
     {
       id: 'aarch64_generic',
@@ -97,9 +98,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'ARM64',
       desc: '现代 64 位 ARM SOC 软路由及开发板',
       devices: '斐讯 N1, 树莓派 4/5, NanoPi R2S/R4S/R5S/R6S, RK3568/RK3588, MT7981/MT7986',
-      file: 'luci-app-openclash-flow_1.0.1-1_aarch64_generic.ipk',
-      size: '1.4 MB',
-      sha256: '47d32ab2ce3d9a0668f82e7d20aeff3fe462385cd978adac64b9dd9baf8432f3'
+      file: `luci-app-openclash-flow_${FULL_VERSION}_aarch64_generic.ipk`,
+      size: '265 KB',
+      sha256: '5c5c6d6eaf089fdf6372d19af76fbffadbd9f41baa25dcda4597b9ebf0b62459'
     },
     {
       id: 'arm_cortex-a7_neon-vfpv4',
@@ -107,9 +108,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'ARMv7',
       desc: '经典 32 位多核 ARM 路由器平台',
       devices: '高通 IPQ4018/IPQ4019, GL.iNet B1300, 华硕 RT-AC58U, Netgear R6220',
-      file: 'luci-app-openclash-flow_1.0.1-1_arm_cortex-a7_neon-vfpv4.ipk',
-      size: '1.4 MB',
-      sha256: 'bf1485b1ca7a00c8e49f656fb3fc906442e9e07e162252b7c2a8bc44d16e4b3c'
+      file: `luci-app-openclash-flow_${FULL_VERSION}_arm_cortex-a7_neon-vfpv4.ipk`,
+      size: '265 KB',
+      sha256: 'e8840c5228e4c4babe2654aaa84a40593dd28738e9cae7bab625be8ae0070039'
     },
     {
       id: 'mipsel_24kc',
@@ -117,9 +118,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'MIPSEL',
       desc: '联发科 MediaTek MT7621 / MT7628 等经典小端路由器',
       devices: '斐讯 K2P, Newifi D2, 极路由 B70, 歌华链, 小米路由3G',
-      file: 'luci-app-openclash-flow_1.0.1-1_mipsel_24kc.ipk',
-      size: '1.4 MB',
-      sha256: '3692f86896f56c0811d66faf965063c95be1314b1ddd1deec0312df7fbfbcd2b'
+      file: `luci-app-openclash-flow_${FULL_VERSION}_mipsel_24kc.ipk`,
+      size: '265 KB',
+      sha256: '1934db3537d3cd1ec3769c6ba8c626dd6dea5927aefc8caafd87d70acb22edd0'
     },
     {
       id: 'mips_24kc',
@@ -127,9 +128,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'MIPS-BE',
       desc: '高通 / Atheros 传统大端 MIPS 芯片设备',
       devices: 'Atheros AR9344, QCA9531, AR7161, TP-Link WDR7500 等',
-      file: 'luci-app-openclash-flow_1.0.1-1_mips_24kc.ipk',
-      size: '1.4 MB',
-      sha256: 'ecac36d0e3e11e32c3cf67309bff27677a0ee7604f1827e5234c406bebc46e1e'
+      file: `luci-app-openclash-flow_${FULL_VERSION}_mips_24kc.ipk`,
+      size: '265 KB',
+      sha256: 'e78a9be4ea28112727e4cb19c15f0b8a12a16c461fda3ff78b5892432d1d3a2f'
     }
   ];
 
@@ -617,7 +618,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                 <div className="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-amber-500/15 dark:border-amber-500/20 space-y-1">
                   <div className="font-bold text-[#1d1d1f] dark:text-slate-200 flex items-center gap-1.5">
                     <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold flex items-center justify-center">3</span>
-                    <span>v1.0.1+ 已内置动态防缓存</span>
+                    <span>v{APP_VERSION}+ 已内置动态防缓存</span>
                   </div>
                   <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                     新版 LuCI 视图已自动注入 <code className="text-emerald-700 dark:text-emerald-400 font-mono">?_t=timestamp</code>，并且 postinst 会自动清空 <code className="text-slate-500 font-mono">/tmp/luci-*</code> 缓存并重启 Web 守护进程。

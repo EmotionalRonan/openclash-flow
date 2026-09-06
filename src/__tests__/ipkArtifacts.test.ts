@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
+import { FULL_VERSION } from '../version';
 
 describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Checksums)', () => {
   const distDir = path.resolve(process.cwd(), 'dist-ipk');
@@ -14,25 +15,7 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
     'mips_24kc',
   ];
 
-  // Dynamically resolve package version from package-openwrt/Makefile or scripts/build-ipk.sh
-  const getPackageVersion = (): string => {
-    try {
-      const makefilePath = path.resolve(process.cwd(), 'package-openwrt', 'Makefile');
-      if (fs.existsSync(makefilePath)) {
-        const content = fs.readFileSync(makefilePath, 'utf-8');
-        const verMatch = content.match(/PKG_VERSION:=([^\s]+)/);
-        const relMatch = content.match(/PKG_RELEASE:=([^\s]+)/);
-        if (verMatch && relMatch) {
-          return `${verMatch[1]}-${relMatch[1]}`;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return '1.0.1-1';
-  };
-
-  const version = getPackageVersion();
+  const version = FULL_VERSION;
 
   beforeAll(() => {
     // If dist-ipk does not exist or is missing any IPKs, build them on the fly

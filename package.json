@@ -1,12 +1,13 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
-    "build:ipk": "bash ./scripts/build-ipk.sh all-arch",
+    "sync:version": "node ./scripts/sync-version.js",
+    "build:ipk": "node ./scripts/sync-version.js && bash ./scripts/build-ipk.sh all-arch",
     "build:ipk:all": "bash ./scripts/build-ipk.sh all",
     "build:ipk:x86": "bash ./scripts/build-ipk.sh x86_64",
     "build:ipk:aarch64": "bash ./scripts/build-ipk.sh aarch64_generic",
