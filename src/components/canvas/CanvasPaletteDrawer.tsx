@@ -23,6 +23,7 @@ interface CanvasPaletteDrawerProps {
   onToggle: () => void;
   onDragStartPreset: (e: React.DragEvent, item: RuleCategoryItem) => void;
   onAddCustomNode: (type: RuleType, payload: string, title: string, category: any) => void;
+  onQuickAddPreset?: (item: RuleCategoryItem) => void;
 }
 
 export const CanvasPaletteDrawer: React.FC<CanvasPaletteDrawerProps> = ({
@@ -30,6 +31,7 @@ export const CanvasPaletteDrawer: React.FC<CanvasPaletteDrawerProps> = ({
   onToggle,
   onDragStartPreset,
   onAddCustomNode,
+  onQuickAddPreset,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -62,14 +64,14 @@ export const CanvasPaletteDrawer: React.FC<CanvasPaletteDrawerProps> = ({
 
   return (
     <div
-      className={`absolute top-4 left-4 z-30 transition-all duration-300 pointer-events-auto ${
-        isOpen ? 'w-80' : 'w-10'
+      className={`absolute top-3 sm:top-4 left-2 sm:left-4 z-30 transition-all duration-300 pointer-events-auto ${
+        isOpen ? 'w-72 sm:w-80 max-w-[calc(100vw-36px)]' : 'w-8'
       }`}
     >
       {/* Toggle Tab */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 w-6 h-10 rounded-r-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg z-40 transition-colors"
+        className="absolute -right-3.5 top-5 w-7 h-10 rounded-r-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg z-40 transition-colors"
         title={isOpen ? '收起组件库' : '展开规则与组件库'}
       >
         {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -77,7 +79,7 @@ export const CanvasPaletteDrawer: React.FC<CanvasPaletteDrawerProps> = ({
 
       {/* Main Drawer Body */}
       {isOpen && (
-        <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-md max-h-[calc(100vh-220px)] overflow-y-auto space-y-4">
+        <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-2xl backdrop-blur-md max-h-[calc(100vh-250px)] min-h-[320px] overflow-y-auto space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <span className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -126,19 +128,20 @@ export const CanvasPaletteDrawer: React.FC<CanvasPaletteDrawerProps> = ({
 
           {/* Draggable Presets */}
           <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-            <p className="text-[10px] text-slate-400 font-medium px-1">
-              按住卡片直接拖入画布：
-            </p>
+            <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium px-1">
+              <span>拖动卡片或点击「+」添加：</span>
+              <span className="text-[9px] text-indigo-400 font-mono">{filteredPresets.length} 个</span>
+            </div>
             {filteredPresets.map((item) => (
               <div
                 key={item.id}
                 draggable
                 onDragStart={(e) => onDragStartPreset(e, item)}
-                className="p-2 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-indigo-500/60 hover:shadow-md cursor-grab active:cursor-grabbing transition-all select-none group flex items-center justify-between gap-2"
+                className="p-2 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-indigo-500/60 hover:shadow-md cursor-grab active:cursor-grabbing transition-all select-none group flex items-center justify-between gap-1.5"
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <GripVertical className="w-3 h-3 text-slate-600 group-hover:text-indigo-400 shrink-0" />
-                  <div className="min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <GripVertical className="w-3 h-3 text-slate-600 group-hover:text-indigo-400 shrink-0 hidden sm:block" />
+                  <div className="min-w-0 flex-1">
                     <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
                       {item.title}
                     </div>
@@ -148,9 +151,24 @@ export const CanvasPaletteDrawer: React.FC<CanvasPaletteDrawerProps> = ({
                   </div>
                 </div>
 
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 shrink-0">
-                  {item.type}
-                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-400">
+                    {item.type}
+                  </span>
+                  {onQuickAddPreset && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onQuickAddPreset(item);
+                      }}
+                      className="p-1 rounded-md bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white transition-colors"
+                      title="快速加入画布"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -61,7 +61,7 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
             />
           </div>
 
-          {/* Quick preset chips */}
+          {/* Quick preset chips - Desktop */}
           <div className="hidden xl:flex items-center gap-1.5">
             {quickTestTargets.map((item) => (
               <button
@@ -79,8 +79,25 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
           </div>
         </div>
 
+        {/* Quick preset chips - Mobile & Tablet Horizontal Scroll */}
+        <div className="flex xl:hidden overflow-x-auto scrollbar-none py-0.5 gap-1.5 w-full">
+          {quickTestTargets.map((item) => (
+            <button
+              key={item.domain}
+              onClick={() => onTargetChange(item.domain)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap font-medium border transition-colors shrink-0 ${
+                simState.targetQuery === item.domain
+                  ? 'bg-indigo-600 text-white border-indigo-500'
+                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border-slate-800'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* Buttons */}
-        <div className="flex items-center gap-2 self-end lg:self-auto">
+        <div className="flex items-center gap-2 self-stretch sm:self-end lg:self-auto justify-end">
           {!simState.isActive ? (
             <button
               onClick={onStartSimulation}
@@ -125,7 +142,7 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
       </div>
 
       {/* Pipeline Step Indicator with live status */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80">
         {/* Step 1 */}
         <div
           className={`p-2.5 rounded-xl border transition-all ${

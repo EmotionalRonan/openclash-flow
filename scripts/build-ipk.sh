@@ -70,6 +70,9 @@ TARGET_WWW="${COMMON_DATA_DIR}/www/luci-static/resources/openclash-flow"
 mkdir -p "${TARGET_WWW}"
 cp -r "${WORK_DIR}/dist/"* "${TARGET_WWW}/"
 
+# 创建 /www/assets 软链接以双重保障：哪怕浏览器缓存了请求 /assets/ 的旧 HTML 也能正常读取
+ln -sf "luci-static/resources/openclash-flow/assets" "${COMMON_DATA_DIR}/www/assets"
+
 # B. LuCI Controller /usr/lib/lua/luci/controller/openclash_flow.lua (兼容 OpenWrt 18.06 / 19.07 及 luci-compat)
 TARGET_CONTROLLER="${COMMON_DATA_DIR}/usr/lib/lua/luci/controller"
 mkdir -p "${TARGET_CONTROLLER}"
@@ -152,7 +155,7 @@ return view.extend({
             ]),
             E('iframe', {
                 'src': pageUrl,
-                'style': 'width: 100%; height: calc(100vh - 150px); min-height: 800px; border: 1px solid #1e293b; border-radius: 12px; background: #020617; display: block; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);',
+                'style': 'width: 100%; height: calc(100vh - 120px); min-height: 540px; border: 1px solid #1e293b; border-radius: 12px; background: #020617; display: block; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);',
                 'title': 'OpenClash Flow Canvas'
             })
         ]);
@@ -178,7 +181,7 @@ cat << 'EOF' > "${TARGET_VIEW}/index.htm"
             ↗ 独立全屏打开
         </a>
     </div>
-    <div style="width:100%; height:calc(100vh - 150px); min-height:800px; border-radius:12px; overflow:hidden; border:1px solid #1e293b; background:#020617; position:relative;">
+    <div style="width:100%; height:calc(100vh - 120px); min-height:540px; border-radius:12px; overflow:hidden; border:1px solid #1e293b; background:#020617; position:relative;">
         <iframe src="<%=resource%>/openclash-flow/index.html" style="width:100%; height:100%; border:none; display:block;" title="OpenClash Flow Canvas"></iframe>
     </div>
 </div>
@@ -268,6 +271,7 @@ EOF
   cat << 'EOF' > "${ARCH_PKG_DIR}/CONTROL/postinst"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
+    ln -sf /www/luci-static/resources/openclash-flow/assets /www/assets 2>/dev/null || true
     rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
     rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
     /etc/init.d/rpcd restart 2>/dev/null || true
@@ -286,6 +290,7 @@ EOF
   cat << 'EOF' > "${ARCH_PKG_DIR}/CONTROL/prerm"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
+    [ -L /www/assets ] && rm -f /www/assets 2>/dev/null || true
     rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
     rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
     exit 0

@@ -44,11 +44,30 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Viewport transformation: Pan and Zoom
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 40, y: 30 });
-  const [zoom, setZoom] = useState<number>(0.85);
+  // Viewport transformation: Pan and Zoom (adaptive to screen width)
+  const [pan, setPan] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      return { x: 15, y: 15 };
+    }
+    return { x: 40, y: 30 };
+  });
+
+  const [zoom, setZoom] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) return 0.52;
+      if (window.innerWidth < 1024) return 0.68;
+    }
+    return 0.85;
+  });
+
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Touch panning & pinch zoom tracking
+  const touchStateRef = useRef<{
+    dist: number;
+    initialZoom: number;
+  }>({ dist: 0, initialZoom: 0.85 });
 
   // Nodes & Edges on canvas
   const [nodes, setNodes] = useState<CanvasNodeData[]>([]);
@@ -67,8 +86,10 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   } | null>(null);
   const [connectingMousePos, setConnectingMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Palette drawer
-  const [isPaletteOpen, setIsPaletteOpen] = useState(true);
+  // Palette drawer (collapsed on tablet/mobile by default to maximize canvas space)
+  const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(() => {
+    return typeof window !== 'undefined' ? window.innerWidth >= 1280 : true;
+  });
 
   // Simulation State
   const [simState, setSimState] = useState<StepSimulationState>({
@@ -242,12 +263,161 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     autoLayoutNodes();
   }, [autoLayoutNodes]);
 
+  // Fit view calculation to center and scale all nodes into container
+  const fitView = useCallback(() => {
+    if (!containerRef.current || nodes.length === 0) return;
+    const containerWidth = containerRef.current.clientWidth;
+    const containerHeight = containerRef.current.clientHeight;
+    if (!containerWidth || !containerHeight) return;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    nodes.forEach((n) => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + (n.width || 260));
+      maxY = Math.max(maxY, n.y + (n.height || 140));
+    });
+
+    const isSmallScreen = containerWidth < 640;
+    const padding = isSmallScreen ? 20 : 50;
+    const boxWidth = maxX - minX + padding * 2;
+    const boxHeight = maxY - minY + padding * 2;
+
+    const scaleX = containerWidth / Math.max(boxWidth, 100);
+    const scaleY = containerHeight / Math.max(boxHeight, 100);
+    const targetZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.32), 1.15);
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const newPanX = containerWidth / 2 - centerX * targetZoom;
+    const newPanY = containerHeight / 2 - centerY * targetZoom;
+
+    setZoom(Number(targetZoom.toFixed(2)));
+    setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
+  }, [nodes]);
+
+  // Listen to window resize to ensure canvas remains accessible
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640 && isPaletteOpen) {
+        setIsPaletteOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isPaletteOpen]);
+
   // Viewport Pan handlers
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     // Only pan if clicking canvas background directly
     if (e.target === containerRef.current || (e.target as HTMLElement).tagName === 'svg') {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  };
+
+  // Touch handlers for mobile & tablet (Pan and Pinch-to-zoom)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsPanning(true);
+      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+    } else if (e.touches.length === 2) {
+      setIsPanning(false);
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStateRef.current = {
+        dist,
+        initialZoom: zoom,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isPanning) {
+      const touch = e.touches[0];
+      setPan({
+        x: touch.clientX - panStart.x,
+        y: touch.clientY - panStart.y,
+      });
+    } else if (e.touches.length === 2) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (touchStateRef.current.dist > 0) {
+        const ratio = currentDist / touchStateRef.current.dist;
+        const newZoom = Math.min(Math.max(touchStateRef.current.initialZoom * ratio, 0.32), 2.0);
+        setZoom(Number(newZoom.toFixed(2)));
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+    setDraggedNodeId(null);
+  };
+
+  const handleQuickAddPreset = (item: RuleCategoryItem) => {
+    const newRuleId = `custom-rule-${Date.now()}`;
+    const targetGroup = policyGroups[0]?.name || '🚀 节点选择 (PROXY)';
+    const newRule: TrafficRule = {
+      id: newRuleId,
+      type: item.type,
+      payload: item.payload,
+      targetGroup,
+      comment: item.title,
+      enabled: true,
+      category: item.category,
+    };
+
+    setRules((prev) => [newRule, ...prev]);
+
+    // Position in Step 2 column below existing rules
+    const existingRuleNodes = nodes.filter((n) => n.step === 2);
+    const newY = existingRuleNodes.length > 0
+      ? Math.max(...existingRuleNodes.map((n) => n.y)) + 140
+      : 80;
+
+    const newNode: CanvasNodeData = {
+      id: `node-rule-${newRuleId}`,
+      type: 'custom-rule',
+      title: item.title,
+      subtitle: `${item.type} ${item.payload}`,
+      x: 440,
+      y: newY,
+      width: 260,
+      height: 120,
+      step: 2,
+      stepName: '分流规则',
+      ruleType: item.type,
+      payload: item.payload,
+      targetGroup,
+      rawId: newRuleId,
+    };
+
+    setNodes((prev) => [...prev, newNode]);
+
+    const groupNode = nodes.find((n) => n.step === 3 && n.title === targetGroup);
+    if (groupNode) {
+      setEdges((prev) => [
+        ...prev,
+        {
+          id: `edge-${newNode.id}-${groupNode.id}-${Date.now()}`,
+          fromNodeId: newNode.id,
+          fromPort: 'out',
+          toNodeId: groupNode.id,
+          toPort: 'in',
+          color: '#10b981',
+        },
+      ]);
     }
   };
 
@@ -684,26 +854,37 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
         onDragOver={handleDragOverCanvas}
         onDrop={handleDropOnCanvas}
-        className="relative w-full h-[660px] bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden select-none cursor-default shadow-2xl"
+        className="relative w-full h-[480px] sm:h-[580px] lg:h-[calc(100vh-270px)] min-h-[480px] max-h-[860px] bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden select-none cursor-default shadow-2xl touch-none"
       >
         {/* Floating Canvas Navigation Toolbar */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl shadow-xl backdrop-blur-md">
+        <div className="absolute top-3 sm:top-4 right-2 sm:right-4 z-30 flex items-center gap-1 sm:gap-1.5 bg-slate-900/90 border border-slate-800 p-1 sm:p-1.5 rounded-xl shadow-xl backdrop-blur-md">
           <button
-            onClick={() => setZoom((z) => Math.min(2.0, z + 0.15))}
+            onClick={() => setZoom((z) => Math.min(2.0, Number((z + 0.15).toFixed(2))))}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
             title="放大画布 (Zoom In)"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setZoom((z) => Math.max(0.35, z - 0.15))}
+            onClick={() => setZoom((z) => Math.max(0.32, Number((z - 0.15).toFixed(2))))}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
             title="缩小画布 (Zoom Out)"
           >
             <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            onClick={fitView}
+            className="flex items-center gap-1 p-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-xs font-semibold"
+            title="自适应所有节点居中缩放"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">自适应</span>
           </button>
           <button
             onClick={() => {
@@ -711,18 +892,21 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
               setPan({ x: 40, y: 30 });
             }}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors font-mono text-xs font-semibold px-2"
-            title="重置缩放比例"
+            title="重置缩放比例为 85%"
           >
             {Math.round(zoom * 100)}%
           </button>
           <div className="w-[1px] h-4 bg-slate-700 mx-0.5" />
           <button
-            onClick={autoLayoutNodes}
+            onClick={() => {
+              autoLayoutNodes();
+              setTimeout(fitView, 50);
+            }}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"
-            title="一键根据 OpenClash 管道自动重排拓扑"
+            title="一键根据 OpenClash 管道自动重排拓扑并居中"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>自动整理布局</span>
+            <span className="hidden sm:inline">整理布局</span>
           </button>
         </div>
 
@@ -734,6 +918,7 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
             e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'preset', id: item.payload }));
           }}
           onAddCustomNode={handleAddCustomNode}
+          onQuickAddPreset={handleQuickAddPreset}
         />
 
         {/* Minimap Radar */}

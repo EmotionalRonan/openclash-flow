@@ -20,6 +20,7 @@ interface HeaderProps {
   nodeCount: number;
   ruleCount: number;
   onOpenArchitecture: () => void;
+  onOpenCaseStudy?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   nodeCount,
   ruleCount,
   onOpenArchitecture,
+  onOpenCaseStudy,
 }) => {
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
 
@@ -96,15 +98,28 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Quick Controls & Status */}
           <div className="flex items-center gap-3">
+            {/* Case Study Guide button */}
+            {onOpenCaseStudy && (
+              <button
+                id="btn-case-study-modal"
+                onClick={onOpenCaseStudy}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-indigo-500/20 hover:from-amber-500/30 hover:to-indigo-500/30 text-amber-300 border border-amber-500/40 transition-colors shadow-sm"
+                title="查看 ChatGPT 分流实战案例与操作步骤指南"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                <span>案例演示</span>
+              </button>
+            )}
+
             {/* Architecture diagram button */}
             <button
               id="btn-architecture-modal"
               onClick={onOpenArchitecture}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-700/80 text-cyan-300 border border-cyan-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-700/80 text-cyan-300 border border-cyan-500/30 transition-colors"
               title="查看功能模块设计与前后端交互流程图"
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">架构流程图</span>
+              <Terminal className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">架构流程图</span>
             </button>
 
             {/* Run mode selector */}

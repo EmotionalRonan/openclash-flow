@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { ArchitectureModal } from './components/ArchitectureModal';
+import { CaseStudyModal } from './components/CaseStudyModal';
 import { DragDropRuleBoard } from './components/DragDropRuleBoard';
 import { NodeManager } from './components/NodeManager';
 import { RuleDebugger } from './components/RuleDebugger';
@@ -35,12 +36,60 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('routing');
   const [showArchitectureModal, setShowArchitectureModal] = useState<boolean>(false);
+  const [showCaseStudyModal, setShowCaseStudyModal] = useState<boolean>(false);
 
   // Core State
   const [settings, setSettings] = useState<OpenClashSettings>(DEFAULT_OPENCLASH_SETTINGS);
   const [policyGroups, setPolicyGroups] = useState<PolicyGroup[]>(INITIAL_POLICY_GROUPS);
   const [proxies, setProxies] = useState<ProxyNode[]>(INITIAL_PROXIES);
   const [rules, setRules] = useState<TrafficRule[]>(INITIAL_TRAFFIC_RULES);
+
+  // One-click apply case topology (ChatGPT分流到香港专线，国内直连)
+  const handleApplyCaseTopology = () => {
+    setActiveTab('routing');
+
+    // Ensure OpenAI rule exists at the top
+    const openAiRule: TrafficRule = {
+      id: 'rule-openai-preset',
+      type: 'DOMAIN-SUFFIX',
+      payload: 'openai.com',
+      targetGroup: '🚀 节点选择 (PROXY)',
+      comment: 'OpenAI / ChatGPT 官方 API 与网页',
+      enabled: true,
+      category: 'ai',
+    };
+
+    const directRule: TrafficRule = {
+      id: 'rule-cn-preset',
+      type: 'GEOIP',
+      payload: 'CN',
+      targetGroup: 'DIRECT',
+      comment: '中国大陆地区 IP 直连',
+      enabled: true,
+      category: 'domestic',
+    };
+
+    // Make sure '🚀 节点选择 (PROXY)' has '🇭🇰 香港 IPLC 01' as primary proxy
+    setPolicyGroups((prev) =>
+      prev.map((g) => {
+        if (g.name.includes('节点选择') || g.name.includes('PROXY')) {
+          const hkProxy = proxies.find((p) => p.name.includes('香港') || p.name.includes('HK'));
+          return {
+            ...g,
+            now: hkProxy ? hkProxy.name : g.now,
+          };
+        }
+        return g;
+      })
+    );
+
+    setRules((prev) => {
+      const filtered = prev.filter(
+        (r) => !r.payload.includes('openai') && r.payload !== 'CN'
+      );
+      return [openAiRule, directRule, ...filtered];
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -54,10 +103,11 @@ export default function App() {
         nodeCount={proxies.length}
         ruleCount={rules.length}
         onOpenArchitecture={() => setShowArchitectureModal(true)}
+        onOpenCaseStudy={() => setShowCaseStudyModal(true)}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Content Area (Responsive padding) */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
         
         {/* TAB 1: Drag & Drop Rule Board */}
         {activeTab === 'routing' && (
@@ -145,6 +195,13 @@ export default function App() {
       <ArchitectureModal
         isOpen={showArchitectureModal}
         onClose={() => setShowArchitectureModal(false)}
+      />
+
+      {/* Case Study & Step-by-Step Operations Modal */}
+      <CaseStudyModal
+        isOpen={showCaseStudyModal}
+        onClose={() => setShowCaseStudyModal(false)}
+        onApplyCaseTopology={handleApplyCaseTopology}
       />
 
     </div>
