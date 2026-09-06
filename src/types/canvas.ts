@@ -39,6 +39,7 @@ export interface CanvasEdge {
   color?: string;
   label?: string;
   animated?: boolean;
+  style?: 'solid' | 'dashed' | 'dotted';
 }
 
 export interface StepSimulationState {

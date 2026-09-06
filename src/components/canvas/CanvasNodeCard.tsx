@@ -6,29 +6,25 @@ import {
   Gamepad2, 
   Globe, 
   ShieldBan, 
-  ShieldCheck, 
   Layers, 
-  Zap, 
-  RefreshCw, 
   Radio, 
   Server, 
   Sparkles, 
-  ArrowRight,
   GripVertical,
-  CheckCircle2,
   Trash2,
-  Lock,
-  Wifi
+  Pencil
 } from 'lucide-react';
 
 interface CanvasNodeCardProps {
   node: CanvasNodeData;
   isSelected: boolean;
+  isDragging?: boolean;
   isActiveInSimulation: boolean;
   simulationStep: number;
   onMouseDown: (e: React.MouseEvent, node: CanvasNodeData) => void;
   onPortMouseDown: (e: React.MouseEvent, nodeId: string, portType: 'in' | 'out') => void;
   onPortMouseUp: (e: React.MouseEvent, nodeId: string, portType: 'in' | 'out') => void;
+  onEditNode?: (node: CanvasNodeData) => void;
   onDeleteNode?: (nodeId: string) => void;
   onToggleEnabled?: (nodeId: string) => void;
 }
@@ -36,11 +32,13 @@ interface CanvasNodeCardProps {
 export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
   node,
   isSelected,
+  isDragging = false,
   isActiveInSimulation,
   simulationStep,
   onMouseDown,
   onPortMouseDown,
   onPortMouseUp,
+  onEditNode,
   onDeleteNode,
   onToggleEnabled,
 }) => {
@@ -68,25 +66,26 @@ export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
       return <Layers className="w-4 h-4 text-indigo-400" />;
     }
     if (node.type === 'group') {
-      if (node.groupType === 'url-test') return <Zap className="w-4 h-4 text-amber-400" />;
-      if (node.groupType === 'fallback') return <RefreshCw className="w-4 h-4 text-slate-300" />;
-      return <Server className="w-4 h-4 text-indigo-400" />;
+      return <Layers className="w-4 h-4 text-purple-400" />;
     }
-    // Outbound
-    return <Wifi className="w-4 h-4 text-emerald-400" />;
+    if (node.type === 'outbound') {
+      if (node.nodeType === 'direct') return <Globe className="w-4 h-4 text-sky-400" />;
+      if (node.nodeType === 'reject') return <ShieldBan className="w-4 h-4 text-red-400" />;
+      return <Server className="w-4 h-4 text-emerald-400" />;
+    }
+    return <Layers className="w-4 h-4 text-indigo-400" />;
   };
 
-  // Node styles based on step & simulation (Apple aesthetic)
   const getBorderAndBg = () => {
     if (isActiveInSimulation) {
-      return 'border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-50/95 dark:bg-[#121815]/95 shadow-[0_0_28px_rgba(52,199,89,0.35)]';
+      return 'border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-50/90 dark:bg-emerald-950/40 shadow-lg shadow-emerald-500/20';
     }
     if (isSelected) {
-      return 'border-indigo-500/90 ring-2 ring-indigo-500/30 bg-indigo-50/95 dark:bg-[#151622]/95 shadow-[0_8px_24px_rgba(99,102,241,0.25)]';
+      return 'border-indigo-500 ring-2 ring-indigo-500/50 bg-indigo-50/80 dark:bg-indigo-950/40 shadow-lg shadow-indigo-500/25';
     }
     switch (node.step) {
       case 1:
-        return 'border-sky-500/30 bg-white/95 dark:bg-[#0e1219]/90 hover:border-sky-400/60 shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]';
+        return 'border-sky-500/30 bg-white/95 dark:bg-[#0c131a]/90 hover:border-sky-400/60 shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]';
       case 2:
         return 'border-indigo-500/30 bg-white/95 dark:bg-[#12131e]/90 hover:border-indigo-400/60 shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]';
       case 3:
@@ -120,7 +119,15 @@ export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
         height: `${node.height || 125}px`,
       }}
       onMouseDown={(e) => onMouseDown(e, node)}
-      className={`absolute top-0 left-0 rounded-2xl border transition-all duration-150 cursor-grab active:cursor-grabbing select-none backdrop-blur-2xl z-10 group flex flex-col justify-between overflow-visible ${getBorderAndBg()} ${
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (onEditNode) onEditNode(node);
+      }}
+      className={`absolute top-0 left-0 rounded-2xl border select-none backdrop-blur-2xl group flex flex-col justify-between overflow-visible transition-[border-color,background-color,box-shadow,opacity] duration-150 ${
+        isDragging 
+          ? 'z-40 shadow-2xl cursor-grabbing ring-2 ring-indigo-500/60' 
+          : 'z-10 cursor-grab active:cursor-grabbing hover:shadow-md'
+      } ${getBorderAndBg()} ${
         node.enabled === false ? 'opacity-50 grayscale' : ''
       }`}
     >
@@ -191,8 +198,26 @@ export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
           <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border font-semibold ${getStepBadgeColor()}`}>
             Step {node.step}
           </span>
+          
+          {/* Edit Button */}
+          {onEditNode && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditNode(node);
+              }}
+              className="p-1 rounded-md text-[#86868b] hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition-colors"
+              title="编辑卡片配置"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+          )}
+
+          {/* Delete Button (for custom rules) */}
           {onDeleteNode && node.type === 'custom-rule' && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onDeleteNode(node.id);
@@ -291,9 +316,9 @@ export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
       <div className="px-3 py-1.5 bg-black/[0.03] dark:bg-black/20 rounded-b-2xl border-t border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between text-[9px] text-[#86868b] dark:text-[#71717a]">
         <span className="flex items-center gap-1">
           <GripVertical className="w-2.5 h-2.5" />
-          可自由拖拽
+          双击编辑 • 拖拽移动
         </span>
-        {node.step < 4 && <span className="text-emerald-600 dark:text-emerald-400 font-medium">连线端口 👉</span>}
+        {node.step < 4 && <span className="text-emerald-600 dark:text-emerald-400 font-medium">端口连线 👉</span>}
       </div>
     </div>
   );

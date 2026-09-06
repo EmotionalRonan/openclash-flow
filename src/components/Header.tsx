@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/[0.08] dark:border-white/[0.08] bg-white/80 dark:bg-[#0c0d13]/80 backdrop-blur-2xl transition-colors">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div className="w-full px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-15 sm:h-16 gap-3">
           
           {/* Logo & Brand (Apple SF Squircle) */}

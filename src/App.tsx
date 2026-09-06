@@ -106,8 +106,8 @@ export default function App() {
         onOpenCaseStudy={() => setShowCaseStudyModal(true)}
       />
 
-      {/* Main Content Area (Responsive padding) */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
+      {/* Main Content Area (Responsive padding full width 100%) */}
+      <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-3 sm:py-5">
         
         {/* TAB 1: Drag & Drop Rule Board */}
         {activeTab === 'routing' && (
@@ -165,7 +165,7 @@ export default function App() {
 
       {/* Footer Info */}
       <footer className="border-t border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#090a0f]/80 py-4 text-center text-xs text-[#86868b] dark:text-[#71717a] transition-colors">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="w-full px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
             <span className="text-[#1d1d1f] dark:text-[#d4d4d8]">OpenClash Flow v1.0 • 专为 ImmortalWRT 路由器优化</span>

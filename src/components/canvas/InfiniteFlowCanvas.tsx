@@ -11,6 +11,8 @@ import { CanvasWire } from './CanvasWire';
 import { CanvasMinimap } from './CanvasMinimap';
 import { StepSimulatorBar } from './StepSimulatorBar';
 import { CanvasPaletteDrawer } from './CanvasPaletteDrawer';
+import { NodeEditModal } from './NodeEditModal';
+import { EdgeEditModal } from './EdgeEditModal';
 import { useTheme } from '../../context/ThemeContext';
 import { 
   ZoomIn, 
@@ -80,6 +82,12 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   // Nodes & Edges on canvas
   const [nodes, setNodes] = useState<CanvasNodeData[]>([]);
   const [edges, setEdges] = useState<CanvasEdge[]>([]);
+
+  // Selection & Modal Editing State
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [editingNode, setEditingNode] = useState<CanvasNodeData | null>(null);
+  const [editingEdge, setEditingEdge] = useState<CanvasEdge | null>(null);
 
   // Dragging a node
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
@@ -326,6 +334,8 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     if (e.target === containerRef.current || (e.target as HTMLElement).tagName === 'svg') {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
     }
   };
 
@@ -469,6 +479,22 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     setConnectingPort(null);
   };
 
+  // Global mouseup safety to ensure drag and pan terminate even if mouse is released outside container
+  useEffect(() => {
+    if (!draggedNodeId && !isPanning && !connectingPort) return;
+
+    const onGlobalMouseUp = () => {
+      setDraggedNodeId(null);
+      setIsPanning(false);
+      setConnectingPort(null);
+    };
+
+    window.addEventListener('mouseup', onGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', onGlobalMouseUp);
+    };
+  }, [draggedNodeId, isPanning, connectingPort]);
+
   // Native non-passive Wheel Zoom to prevent browser "Unable to preventDefault inside passive event listener invocation" error
   useEffect(() => {
     const container = containerRef.current;
@@ -512,6 +538,8 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     const worldMouseX = (e.clientX - containerRect.left - pan.x) / zoom;
     const worldMouseY = (e.clientY - containerRect.top - pan.y) / zoom;
 
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
     setDraggedNodeId(node.id);
     setNodeDragOffset({
       x: worldMouseX - node.x,
@@ -605,6 +633,8 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   // Delete an edge
   const handleDeleteEdge = (edgeId: string) => {
     setEdges((prev) => prev.filter((e) => e.id !== edgeId));
+    if (selectedEdgeId === edgeId) setSelectedEdgeId(null);
+    if (editingEdge?.id === edgeId) setEditingEdge(null);
   };
 
   // Delete a custom rule node
@@ -615,6 +645,124 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     }
     setNodes((prev) => prev.filter((n) => n.id !== nodeId));
     setEdges((prev) => prev.filter((e) => e.fromNodeId !== nodeId && e.toNodeId !== nodeId));
+    if (selectedNodeId === nodeId) setSelectedNodeId(null);
+    if (editingNode?.id === nodeId) setEditingNode(null);
+  };
+
+  // Edit & Selection Handlers
+  const handleEditNode = (node: CanvasNodeData) => {
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
+    setEditingNode(node);
+  };
+
+  const handleSaveNode = (updatedNode: CanvasNodeData) => {
+    setNodes((prev) => prev.map((n) => (n.id === updatedNode.id ? updatedNode : n)));
+
+    // Sync to OpenClash state if rule
+    if (updatedNode.type === 'rule' || updatedNode.type === 'custom-rule') {
+      if (updatedNode.rawId) {
+        setRules((prev) =>
+          prev.map((r) =>
+            r.id === updatedNode.rawId
+              ? {
+                  ...r,
+                  comment: updatedNode.title,
+                  type: updatedNode.ruleType || r.type,
+                  payload: updatedNode.payload || r.payload,
+                  targetGroup: updatedNode.targetGroup || r.targetGroup,
+                  enabled: updatedNode.enabled !== false,
+                }
+              : r
+          )
+        );
+      }
+
+      // If target group changed, update canvas edge
+      if (updatedNode.targetGroup) {
+        const matchingGroupNode = nodes.find(
+          (n) => n.type === 'group' && n.title === updatedNode.targetGroup
+        );
+        if (matchingGroupNode) {
+          setEdges((prev) => {
+            const hasExisting = prev.some((e) => e.fromNodeId === updatedNode.id);
+            if (hasExisting) {
+              return prev.map((e) =>
+                e.fromNodeId === updatedNode.id ? { ...e, toNodeId: matchingGroupNode.id } : e
+              );
+            } else {
+              return [
+                ...prev,
+                {
+                  id: `edge-${updatedNode.id}-${matchingGroupNode.id}-${Date.now()}`,
+                  fromNodeId: updatedNode.id,
+                  fromPort: 'out',
+                  toNodeId: matchingGroupNode.id,
+                  toPort: 'in',
+                  color: '#6366f1',
+                },
+              ];
+            }
+          });
+        }
+      }
+    }
+
+    // Sync to OpenClash state if group
+    if (updatedNode.type === 'group' && updatedNode.rawId) {
+      setPolicyGroups((prev) =>
+        prev.map((g) =>
+          g.id === updatedNode.rawId
+            ? {
+                ...g,
+                name: updatedNode.title,
+                type: updatedNode.groupType || g.type,
+              }
+            : g
+        )
+      );
+    }
+  };
+
+  const handleSelectEdge = (edgeId: string) => {
+    setSelectedEdgeId(edgeId);
+    setSelectedNodeId(null);
+  };
+
+  const handleEditEdge = (edge: CanvasEdge) => {
+    setSelectedEdgeId(edge.id);
+    setSelectedNodeId(null);
+    setEditingEdge(edge);
+  };
+
+  const handleSaveEdge = (updatedEdge: CanvasEdge, newTargetNodeId?: string) => {
+    const finalTargetId = newTargetNodeId || updatedEdge.toNodeId;
+    setEdges((prev) =>
+      prev.map((e) =>
+        e.id === updatedEdge.id ? { ...updatedEdge, toNodeId: finalTargetId } : e
+      )
+    );
+
+    // If target node was changed, update OpenClash rule target group if the source is a rule
+    const fromNode = nodes.find((n) => n.id === updatedEdge.fromNodeId);
+    const toNode = nodes.find((n) => n.id === finalTargetId);
+    if (
+      fromNode &&
+      toNode &&
+      (fromNode.type === 'rule' || fromNode.type === 'custom-rule') &&
+      toNode.type === 'group'
+    ) {
+      if (fromNode.rawId) {
+        setRules((prev) =>
+          prev.map((r) =>
+            r.id === fromNode.rawId ? { ...r, targetGroup: toNode.title } : r
+          )
+        );
+      }
+      setNodes((prev) =>
+        prev.map((n) => (n.id === fromNode.id ? { ...n, targetGroup: toNode.title } : n))
+      );
+    }
   };
 
   // Drag over canvas to drop preset from palette
@@ -1034,6 +1182,9 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
                   fromNode={fromNode}
                   toNode={toNode}
                   isActive={isActive}
+                  isSelected={selectedEdgeId === edge.id}
+                  onSelectEdge={handleSelectEdge}
+                  onEditEdge={handleEditEdge}
                   onDeleteEdge={handleDeleteEdge}
                 />
               );
@@ -1065,12 +1216,14 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
                 <CanvasNodeCard
                   key={node.id}
                   node={node}
-                  isSelected={false}
+                  isSelected={selectedNodeId === node.id}
+                  isDragging={draggedNodeId === node.id}
                   isActiveInSimulation={isActiveInSimulation}
                   simulationStep={simState.currentStep}
                   onMouseDown={handleNodeMouseDown}
                   onPortMouseDown={handlePortMouseDown}
                   onPortMouseUp={handlePortMouseUp}
+                  onEditNode={handleEditNode}
                   onDeleteNode={handleDeleteNode}
                 />
               );
@@ -1079,21 +1232,47 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         </div>
 
         {/* Bottom Helper Bar */}
-        <div className="absolute bottom-3 left-4 z-20 flex items-center gap-3 text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-sm pointer-events-none">
+        <div className="absolute bottom-3 left-4 z-20 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-400 bg-slate-900/85 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-sm pointer-events-none shadow-lg">
           <span className="flex items-center gap-1 text-slate-300">
             <span className="w-2 h-2 rounded-full bg-indigo-400" />
-            空白处拖拽平移画布
+            空白处拖拽平移
           </span>
-          <span className="text-slate-600">|</span>
+          <span className="text-slate-600 hidden sm:inline">|</span>
           <span className="flex items-center gap-1 text-slate-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            按住卡片右侧端口可拉线连接到下一步
+            右侧端口拉线连接
           </span>
-          <span className="text-slate-600">|</span>
+          <span className="text-slate-600 hidden sm:inline">|</span>
+          <span className="flex items-center gap-1 text-purple-300">
+            <span className="w-2 h-2 rounded-full bg-purple-400" />
+            双击卡片/连线可即时编辑
+          </span>
+          <span className="text-slate-600 hidden sm:inline">|</span>
           <span className="flex items-center gap-1 text-slate-300">
-            滚轮放大/缩小
+            滚轮缩放
           </span>
         </div>
+
+        {/* Node Editing Modal */}
+        <NodeEditModal
+          isOpen={!!editingNode}
+          node={editingNode}
+          policyGroups={policyGroups}
+          proxies={proxies}
+          onClose={() => setEditingNode(null)}
+          onSaveNode={handleSaveNode}
+          onDeleteNode={handleDeleteNode}
+        />
+
+        {/* Edge Editing Modal */}
+        <EdgeEditModal
+          isOpen={!!editingEdge}
+          edge={editingEdge}
+          nodes={nodes}
+          onClose={() => setEditingEdge(null)}
+          onSaveEdge={handleSaveEdge}
+          onDeleteEdge={handleDeleteEdge}
+        />
       </div>
     </div>
   );
