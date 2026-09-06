@@ -24,25 +24,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🟢 Setup Node.js 22.x
+      - name: 🟢 Setup Node.js 24.x
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '24'
 
       - name: 📦 Install dependencies
         run: npm install
+
+      - name: 🔑 Set scripts execution permissions
+        run: |
+          chmod +x ./scripts/build-ipk.sh ./scripts/ipkg-build ./scripts/sync-version.js
 
       - name: 🔢 Extract Single Source of Truth Version
         id: pkg_meta
         run: |
           node ./scripts/sync-version.js
-          VERSION=$(node -p "require('./version.json').version")
-          RELEASE=$(node -p "require('./version.json').release")
-          FULL_VER="${VERSION}-${RELEASE}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "release=${RELEASE}" >> $GITHUB_OUTPUT
-          echo "full_version=${FULL_VER}" >> $GITHUB_OUTPUT
-          echo "Current package version resolved: ${FULL_VER}"
 
       - name: 🔍 TypeScript & Linter check
         run: npm run lint
@@ -52,7 +49,6 @@ jobs:
 
       - name: 🔨 Build Multi-Architecture IPKs Matrix
         run: |
-          chmod +x ./scripts/build-ipk.sh ./scripts/ipkg-build ./scripts/sync-version.js
           npm run build:ipk
 
       - name: 📊 Generate Build Summary

@@ -47,4 +47,11 @@ if (fs.existsSync(makefilePath)) {
   }
 }
 
+// 3. Export to GitHub Actions GITHUB_OUTPUT if present
+if (process.env.GITHUB_OUTPUT) {
+  const outputVars = `version=${version}\nrelease=${release}\nfull_version=${fullVersion}\nname=${name}\n`;
+  fs.appendFileSync(process.env.GITHUB_OUTPUT, outputVars, 'utf-8');
+  console.log(`  ✅ Exported version metadata to GITHUB_OUTPUT (full_version=${fullVersion})`);
+}
+
 console.log(`✨ Version synchronization completed: ${fullVersion}\n`);
