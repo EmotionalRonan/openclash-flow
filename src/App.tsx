@@ -32,6 +32,7 @@ import {
   TrafficRule, 
   OpenClashSettings 
 } from './types/openclash';
+import { FULL_VERSION } from './version';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('routing');
@@ -168,7 +169,7 @@ export default function App() {
         <div className="w-full px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-            <span className="text-[#1d1d1f] dark:text-[#d4d4d8]">OpenClash Flow v1.0 • 专为 ImmortalWRT 路由器优化</span>
+            <span className="text-[#1d1d1f] dark:text-[#d4d4d8]">OpenClash Flow v{FULL_VERSION} • 专为 ImmortalWRT 路由器优化</span>
           </div>
           <div className="flex items-center gap-4 text-[#6e6e73] dark:text-[#8e8e93]">
             <button

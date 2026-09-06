@@ -141,13 +141,13 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
   const [ipkBuildLogs, setIpkBuildLogs] = useState<string[]>([
     '[1/4] 前端单页应用 (Vite build) 生产编译完成 (含 Cache-Busting 动态指纹与防缓存响应头)',
     '[2/4] 组装公共 LuCI 控制器、带自动防缓存时间戳 View 与 RPCD ACL 权限树',
-    '[3/4] 针对 6 大架构封装专属 control.tar.gz + data.tar.gz (v1.0.1-1)',
-    '  - [all] 全架构通用包: luci-app-openclash-flow_1.0.1-1_all.ipk (1.4 MB)',
-    '  - [x86_64] x86 软路由包: luci-app-openclash-flow_1.0.1-1_x86_64.ipk (1.4 MB)',
-    '  - [aarch64] ARM64 开发板包: luci-app-openclash-flow_1.0.1-1_aarch64_generic.ipk (1.4 MB)',
-    '  - [arm_cortex-a7] ARMv7 包: luci-app-openclash-flow_1.0.1-1_arm_cortex-a7_neon-vfpv4.ipk (1.4 MB)',
-    '  - [mipsel_24kc] MIPS小端包: luci-app-openclash-flow_1.0.1-1_mipsel_24kc.ipk (1.4 MB)',
-    '  - [mips_24kc] MIPS大端包: luci-app-openclash-flow_1.0.1-1_mips_24kc.ipk (1.4 MB)',
+    `[3/4] 针对 6 大架构封装专属 control.tar.gz + data.tar.gz (v${FULL_VERSION})`,
+    `  - [all] 全架构通用包: luci-app-openclash-flow_${FULL_VERSION}_all.ipk (1.4 MB)`,
+    `  - [x86_64] x86 软路由包: luci-app-openclash-flow_${FULL_VERSION}_x86_64.ipk (1.4 MB)`,
+    `  - [aarch64] ARM64 开发板包: luci-app-openclash-flow_${FULL_VERSION}_aarch64_generic.ipk (1.4 MB)`,
+    `  - [arm_cortex-a7] ARMv7 包: luci-app-openclash-flow_${FULL_VERSION}_arm_cortex-a7_neon-vfpv4.ipk (1.4 MB)`,
+    `  - [mipsel_24kc] MIPS小端包: luci-app-openclash-flow_${FULL_VERSION}_mipsel_24kc.ipk (1.4 MB)`,
+    `  - [mips_24kc] MIPS大端包: luci-app-openclash-flow_${FULL_VERSION}_mips_24kc.ipk (1.4 MB)`,
     '[4/4] ✨ SHA256 校验和清单计算完成: sha256sums.txt 就绪，安装脚本包含自动清缓存与服务热重载'
   ]);
 
@@ -243,7 +243,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           >
             <Package className="w-3.5 h-3.5 text-amber-200" />
             <span>IPK 软件包与部署</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400/25 text-amber-100 font-mono font-bold">1.0.0</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400/25 text-amber-100 font-mono font-bold">v{FULL_VERSION}</span>
           </button>
           <button
             onClick={() => setActiveTab('yaml')}
@@ -433,13 +433,13 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                       `[${new Date().toLocaleTimeString()}] 触发重新打包多架构 IPK 矩阵...`,
                       '[1/4] 前端单页应用 (Vite build) 生产编译完成',
                       '[2/4] 组装公共 LuCI 控制器、View 与 RPCD ACL 权限树',
-                      '[3/4] 针对 6 大架构重新封装 control.tar.gz + data.tar.gz',
-                      '  - [all] 全架构通用包: luci-app-openclash-flow_1.0.0-1_all.ipk (1.4 MB)',
-                      '  - [x86_64] x86 软路由包: luci-app-openclash-flow_1.0.0-1_x86_64.ipk (1.4 MB)',
-                      '  - [aarch64] ARM64 开发板包: luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk (1.4 MB)',
-                      '  - [arm_cortex-a7] ARMv7 包: luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk (1.4 MB)',
-                      '  - [mipsel_24kc] MIPS小端包: luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk (1.4 MB)',
-                      '  - [mips_24kc] MIPS大端包: luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk (1.4 MB)',
+                      `[3/4] 针对 6 大架构重新封装 control.tar.gz + data.tar.gz (v${FULL_VERSION})`,
+                      `  - [all] 全架构通用包: luci-app-openclash-flow_${FULL_VERSION}_all.ipk (1.4 MB)`,
+                      `  - [x86_64] x86 软路由包: luci-app-openclash-flow_${FULL_VERSION}_x86_64.ipk (1.4 MB)`,
+                      `  - [aarch64] ARM64 开发板包: luci-app-openclash-flow_${FULL_VERSION}_aarch64_generic.ipk (1.4 MB)`,
+                      `  - [arm_cortex-a7] ARMv7 包: luci-app-openclash-flow_${FULL_VERSION}_arm_cortex-a7_neon-vfpv4.ipk (1.4 MB)`,
+                      `  - [mipsel_24kc] MIPS小端包: luci-app-openclash-flow_${FULL_VERSION}_mipsel_24kc.ipk (1.4 MB)`,
+                      `  - [mips_24kc] MIPS大端包: luci-app-openclash-flow_${FULL_VERSION}_mips_24kc.ipk (1.4 MB)`,
                       `[4/4] ✨ 打包完成: 6 个架构 IPK 与 SHA256 校验和已更新`
                     ]);
                   }, 1200);

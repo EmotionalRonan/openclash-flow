@@ -1,12 +1,15 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "sync:version": "node ./scripts/sync-version.js",
+    "bump:patch": "node ./scripts/bump-version.js patch",
+    "bump:minor": "node ./scripts/bump-version.js minor",
+    "bump:release": "node ./scripts/bump-version.js release",
     "build:ipk": "node ./scripts/sync-version.js && bash ./scripts/build-ipk.sh all-arch",
     "build:ipk:all": "bash ./scripts/build-ipk.sh all",
     "build:ipk:x86": "bash ./scripts/build-ipk.sh x86_64",
