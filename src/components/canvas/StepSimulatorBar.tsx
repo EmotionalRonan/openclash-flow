@@ -44,14 +44,14 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
   return (
     <div className="apple-glass rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4 border border-black/[0.08] dark:border-white/[0.08]">
       {/* Top row: Target Input & Action Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/[0.12] border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shrink-0">
             <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>单步仿真回放</span>
           </div>
 
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-[220px]">
             <input
               type="text"
               value={simState.targetQuery}
@@ -61,13 +61,13 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
             />
           </div>
 
-          {/* Quick preset chips - Desktop */}
-          <div className="hidden xl:flex items-center gap-1.5">
+          {/* Quick preset chips - Large screen */}
+          <div className="hidden 2xl:flex items-center gap-1.5 shrink-0">
             {quickTestTargets.map((item) => (
               <button
                 key={item.domain}
                 onClick={() => onTargetChange(item.domain)}
-                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-all apple-press border ${
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-all apple-press border shrink-0 ${
                   simState.targetQuery === item.domain
                     ? 'bg-indigo-600 text-white border-indigo-400/50 shadow-sm'
                     : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] hover:bg-slate-200/80 dark:hover:bg-white/[0.08] border-black/[0.06] dark:border-white/[0.08]'
@@ -79,8 +79,8 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
           </div>
         </div>
 
-        {/* Quick preset chips - Mobile & Tablet Horizontal Scroll */}
-        <div className="flex xl:hidden overflow-x-auto scrollbar-none py-0.5 gap-1.5 w-full">
+        {/* Quick preset chips - Mobile, Tablet & Medium screens (Horizontal Scrollable Chips) */}
+        <div className="flex 2xl:hidden overflow-x-auto scrollbar-none py-0.5 gap-1.5 w-full">
           {quickTestTargets.map((item) => (
             <button
               key={item.domain}
@@ -96,8 +96,8 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
           ))}
         </div>
 
-        {/* Buttons */}
-        <div className="flex items-center gap-2 self-stretch sm:self-end lg:self-auto justify-end">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-end xl:self-auto justify-end shrink-0">
           {!simState.isActive ? (
             <button
               onClick={onStartSimulation}

@@ -13,11 +13,13 @@ import { StepSimulatorBar } from './StepSimulatorBar';
 import { CanvasPaletteDrawer } from './CanvasPaletteDrawer';
 import { NodeEditModal } from './NodeEditModal';
 import { EdgeEditModal } from './EdgeEditModal';
+import { simulateTrafficRoute } from '../../utils/ruleMatcher';
 import { useTheme } from '../../context/ThemeContext';
 import { 
   ZoomIn, 
   ZoomOut, 
   Maximize2, 
+  Minimize2,
   Move, 
   Sparkles, 
   Plus, 
@@ -875,33 +877,40 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
 
   // Step Simulation Logic
   const startSimulation = () => {
-    const query = simState.targetQuery.trim().toLowerCase();
+    const query = simState.targetQuery.trim();
     if (!query) return;
 
     // Step 1: Inbound packet arriving
     const inboundNode = nodes.find((n) => n.step === 1);
     
-    // Find matching rule in Step 2
-    let matchedRuleNode = nodes.find((n) => {
-      if (n.step !== 2 || !n.payload) return false;
-      const p = n.payload.toLowerCase();
-      if (n.ruleType === 'DOMAIN-SUFFIX') return query.endsWith(p);
-      if (n.ruleType === 'DOMAIN-KEYWORD') return query.includes(p);
-      if (n.ruleType === 'DOMAIN') return query === p;
-      return false;
-    });
+    // Evaluate rule match engine
+    const matchRes = simulateTrafficRoute(query, rules, policyGroups, proxies);
+    const matchedRule = matchRes.matchedRule;
+    const targetGroupName = matchRes.targetGroup || '🚀 节点选择 (PROXY)';
+    const selectedProxy = matchRes.selectedNode;
 
+    // Find canvas nodes matching simulation results
+    let matchedRuleNode = nodes.find(
+      (n) => n.step === 2 && matchedRule && (n.rawId === matchedRule.id || (n.ruleType === matchedRule.type && n.payload === matchedRule.payload))
+    );
     if (!matchedRuleNode) {
-      // Fallback to first rule or MATCH
-      matchedRuleNode = nodes.find((n) => n.step === 2);
+      matchedRuleNode = nodes.find((n) => {
+        if (n.step !== 2 || !n.payload) return false;
+        const p = n.payload.toLowerCase();
+        const q = query.toLowerCase();
+        if (n.ruleType === 'DOMAIN-SUFFIX') return q.endsWith(p);
+        if (n.ruleType === 'DOMAIN-KEYWORD') return q.includes(p);
+        if (n.ruleType === 'DOMAIN') return q === p;
+        return false;
+      }) || nodes.find((n) => n.step === 2);
     }
 
-    // Step 3: Target Group
-    const targetGroupName = matchedRuleNode?.targetGroup || '🚀 节点选择 (PROXY)';
     const matchedGroupNode = nodes.find((n) => n.step === 3 && n.title === targetGroupName) || nodes.find((n) => n.step === 3);
+    const matchingProxyNode = nodes.find((n) => n.step === 4 && selectedProxy && n.title === selectedProxy.name) ||
+      nodes.find((n) => n.step === 4) ||
+      nodes.find((n) => n.type === 'outbound');
 
-    // Step 4: Outbound Node
-    const matchingProxyNode = nodes.find((n) => n.step === 4) || nodes.find((n) => n.type === 'outbound');
+    const fakeIp = matchRes.dnsResolvedIp || '198.18.0.42';
 
     setSimState({
       isActive: true,
@@ -909,12 +918,12 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       currentStep: 1,
       activeNodeIds: inboundNode ? [inboundNode.id] : [],
       activeEdgeIds: [],
-      explanation: `Step 1: 局域网终端发起对 ${query} 的访问请求，被 OpenClash Fake-IP DNS 劫持并分配虚拟 IP (198.18.0.42)，由 utun 网卡注入内核。`,
+      explanation: `Step 1: 局域网终端发起对 ${query} 的访问请求，被 OpenClash Fake-IP DNS 劫持并分配虚拟 IP (${fakeIp})，由 utun 网卡注入内核。`,
       details: {
-        inbound: `Fake-IP 劫持 -> 198.18.0.42 (:443)`,
-        matchedRule: matchedRuleNode ? `${matchedRuleNode.ruleType} ${matchedRuleNode.payload}` : 'MATCH (兜底)',
+        inbound: `Fake-IP 劫持 -> ${fakeIp} (:443)`,
+        matchedRule: matchedRule ? `${matchedRule.type}, ${matchedRule.payload}` : (matchedRuleNode ? `${matchedRuleNode.ruleType} ${matchedRuleNode.payload}` : 'MATCH (兜底)'),
         selectedGroup: targetGroupName,
-        outboundNode: matchingProxyNode?.title || '🇭🇰 香港 IPLC 01',
+        outboundNode: selectedProxy?.name || matchingProxyNode?.title || '🇭🇰 香港 IPLC 01',
       },
     });
   };
@@ -923,52 +932,70 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     const nextStep = simState.currentStep + 1;
     if (nextStep > 4) return;
 
-    const query = simState.targetQuery;
+    const query = simState.targetQuery.trim();
     const inboundNode = nodes.find((n) => n.step === 1);
-    const matchedRuleNode = nodes.find((n) => {
-      if (n.step !== 2 || !n.payload) return false;
-      const p = n.payload.toLowerCase();
-      if (n.ruleType === 'DOMAIN-SUFFIX') return query.endsWith(p);
-      if (n.ruleType === 'DOMAIN-KEYWORD') return query.includes(p);
-      return false;
-    }) || nodes.find((n) => n.step === 2);
+    
+    // Evaluate rule match engine
+    const matchRes = simulateTrafficRoute(query, rules, policyGroups, proxies);
+    const matchedRule = matchRes.matchedRule;
+    const targetGroupName = matchRes.targetGroup || '🚀 节点选择 (PROXY)';
+    const selectedProxy = matchRes.selectedNode;
 
-    const targetGroupName = matchedRuleNode?.targetGroup || '🚀 节点选择 (PROXY)';
+    let matchedRuleNode = nodes.find(
+      (n) => n.step === 2 && matchedRule && (n.rawId === matchedRule.id || (n.ruleType === matchedRule.type && n.payload === matchedRule.payload))
+    );
+    if (!matchedRuleNode) {
+      matchedRuleNode = nodes.find((n) => {
+        if (n.step !== 2 || !n.payload) return false;
+        const p = n.payload.toLowerCase();
+        const q = query.toLowerCase();
+        if (n.ruleType === 'DOMAIN-SUFFIX') return q.endsWith(p);
+        if (n.ruleType === 'DOMAIN-KEYWORD') return q.includes(p);
+        if (n.ruleType === 'DOMAIN') return q === p;
+        return false;
+      }) || nodes.find((n) => n.step === 2);
+    }
+
     const matchedGroupNode = nodes.find((n) => n.step === 3 && n.title === targetGroupName) || nodes.find((n) => n.step === 3);
-    const matchingProxyNode = nodes.find((n) => n.step === 4);
+    const matchingProxyNode = nodes.find((n) => n.step === 4 && selectedProxy && n.title === selectedProxy.name) ||
+      nodes.find((n) => n.step === 4);
 
     if (nextStep === 2) {
       const activeEdge = edges.find(
         (e) => e.fromNodeId === inboundNode?.id && e.toNodeId === matchedRuleNode?.id
       );
+      const ruleText = matchedRule ? `${matchedRule.type}, ${matchedRule.payload}` : `${matchedRuleNode?.ruleType} ${matchedRuleNode?.payload}`;
       setSimState((prev) => ({
         ...prev,
         currentStep: 2,
         activeNodeIds: [matchedRuleNode?.id || ''],
         activeEdgeIds: activeEdge ? [activeEdge.id] : [],
-        explanation: `Step 2: Clash 核心引擎扫描分流规则，命中 [${matchedRuleNode?.ruleType} ${matchedRuleNode?.payload}]，指定目标策略组为 [${targetGroupName}]。`,
+        explanation: `Step 2: Clash 核心引擎扫描分流规则，精准命中 [${ruleText}]，指定路由目标策略组为 [${targetGroupName}]。`,
       }));
     } else if (nextStep === 3) {
       const activeEdge = edges.find(
         (e) => e.fromNodeId === matchedRuleNode?.id && e.toNodeId === matchedGroupNode?.id
       );
+      const groupType = matchedGroupNode?.groupType || 'select';
       setSimState((prev) => ({
         ...prev,
         currentStep: 3,
         activeNodeIds: [matchedGroupNode?.id || ''],
         activeEdgeIds: activeEdge ? [activeEdge.id] : [],
-        explanation: `Step 3: 策略组 [${matchedGroupNode?.title}] 依据其调度算法 (${matchedGroupNode?.groupType})，从可用节点列表中优选最优物理出站节点。`,
+        explanation: `Step 3: 策略组 [${matchedGroupNode?.title || targetGroupName}] 依据调度策略 (${groupType})，从可用节点列表中优选最优物理出站节点。`,
       }));
     } else if (nextStep === 4) {
       const activeEdge = edges.find(
         (e) => e.fromNodeId === matchedGroupNode?.id && e.toNodeId === matchingProxyNode?.id
       );
+      const nodeTitle = selectedProxy?.name || matchingProxyNode?.title || '出口节点';
+      const latency = selectedProxy?.latency || matchingProxyNode?.latency || 28;
       setSimState((prev) => ({
         ...prev,
         currentStep: 4,
         activeNodeIds: [matchingProxyNode?.id || ''],
         activeEdgeIds: activeEdge ? [activeEdge.id] : [],
-        explanation: `Step 4: 流量已建立加密握手，通过物理出口 [${matchingProxyNode?.title}] (实测延迟 ${matchingProxyNode?.latency || 28}ms) 发送至目标服务器！`,
+        explanation: `Step 4: 流量已建立加密握手，通过物理出口 [${nodeTitle}] (实测延迟 ${latency}ms) 发送至目标服务器！`,
       }));
       setIsAutoPlaying(false);
     }

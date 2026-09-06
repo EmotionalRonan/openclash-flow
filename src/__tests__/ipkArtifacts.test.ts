@@ -27,7 +27,7 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
     if (!allExist) {
       execSync('npm run build:ipk', { stdio: 'pipe' });
     }
-  });
+  }, 60000);
 
   it('dist-ipk 产物目录应存在', () => {
     expect(fs.existsSync(distDir)).toBe(true);
