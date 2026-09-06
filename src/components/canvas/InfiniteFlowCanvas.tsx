@@ -65,6 +65,12 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Zoom & Pan refs for non-passive wheel listener
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const panRef = useRef(pan);
+  panRef.current = pan;
+
   // Touch panning & pinch zoom tracking
   const touchStateRef = useRef<{
     dist: number;
@@ -463,25 +469,39 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     setConnectingPort(null);
   };
 
-  // Mouse Wheel Zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.35), 2.0);
+  // Native non-passive Wheel Zoom to prevent browser "Unable to preventDefault inside passive event listener invocation" error
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const containerRect = containerRef.current?.getBoundingClientRect();
-    if (!containerRect) return;
+    const handleNativeWheel = (e: WheelEvent) => {
+      // Safely prevent page scrolling while zooming on the canvas
+      e.preventDefault();
 
-    // Zoom centered towards mouse cursor
-    const mouseX = e.clientX - containerRect.left;
-    const mouseY = e.clientY - containerRect.top;
+      const currentZoom = zoomRef.current;
+      const currentPan = panRef.current;
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.35), 2.0);
 
-    const newPanX = mouseX - (mouseX - pan.x) * (newZoom / zoom);
-    const newPanY = mouseY - (mouseY - pan.y) * (newZoom / zoom);
+      const containerRect = container.getBoundingClientRect();
+      if (!containerRect) return;
 
-    setZoom(newZoom);
-    setPan({ x: newPanX, y: newPanY });
-  };
+      // Zoom centered towards mouse cursor
+      const mouseX = e.clientX - containerRect.left;
+      const mouseY = e.clientY - containerRect.top;
+
+      const newPanX = mouseX - (mouseX - currentPan.x) * (newZoom / currentZoom);
+      const newPanY = mouseY - (mouseY - currentPan.y) * (newZoom / currentZoom);
+
+      setZoom(newZoom);
+      setPan({ x: newPanX, y: newPanY });
+    };
+
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
 
   // Node Drag Start
   const handleNodeMouseDown = (e: React.MouseEvent, node: CanvasNodeData) => {
@@ -859,7 +879,6 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onWheel={handleWheel}
         onDragOver={handleDragOverCanvas}
         onDrop={handleDropOnCanvas}
         style={{
