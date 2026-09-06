@@ -196,60 +196,60 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
     <div className="space-y-5">
       
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 backdrop-blur-sm">
+      <div className="apple-glass rounded-3xl p-4 sm:p-5 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xl">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <FileCode2 className="w-5 h-5 text-indigo-400" />
+          <h2 className="text-base font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight flex items-center gap-2">
+            <FileCode2 className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
             分流策略配置文件生成与 ImmortalWRT 路由器同步
-            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-normal">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-medium border border-indigo-200 dark:border-indigo-500/30">
               100% 兼容 OpenClash / Mihomo
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
             根据画布拖拽与节点配置自动编译生成标准 Clash YAML 与 OpenWrt UCI 脚本，支持一键推送到路由器
           </p>
         </div>
 
         {/* Format Switcher */}
-        <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs self-start md:self-auto">
+        <div className="flex bg-slate-100/90 dark:bg-slate-950 p-1 rounded-2xl border border-black/[0.06] dark:border-slate-800 text-xs self-start md:self-auto gap-1">
           <button
             onClick={() => setActiveTab('ipk')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
               activeTab === 'ipk'
-                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold shadow-md shadow-orange-600/20'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-600 text-white font-semibold shadow-sm'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            <Package className="w-3.5 h-3.5 text-amber-300" />
+            <Package className="w-3.5 h-3.5 text-amber-200" />
             <span>IPK 软件包与部署</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">1.0.0</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400/25 text-amber-100 font-mono font-bold">1.0.0</span>
           </button>
           <button
             onClick={() => setActiveTab('yaml')}
-            className={`px-3.5 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
               activeTab === 'yaml'
-                ? 'bg-indigo-600 text-white font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             Clash YAML 配置
           </button>
           <button
             onClick={() => setActiveTab('uci')}
-            className={`px-3.5 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
               activeTab === 'uci'
-                ? 'bg-indigo-600 text-white font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             ImmortalWRT UCI 脚本
           </button>
           <button
             onClick={() => setActiveTab('sync')}
-            className={`px-3.5 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
               activeTab === 'sync'
-                ? 'bg-indigo-600 text-white font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             路由器实时同步
@@ -258,33 +258,33 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       </div>
 
       {/* Preset Profiles Quick Bar */}
-      <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div className="flex items-center gap-2 text-slate-300">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span className="font-medium">一键套用场景模版:</span>
+      <div className="apple-glass rounded-2xl p-3 border border-black/[0.06] dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2 text-[#1d1d1f] dark:text-slate-300">
+          <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+          <span className="font-semibold">一键套用场景模版:</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleApplyPresetTemplate('streaming')}
-            className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 border border-black/[0.06] dark:border-slate-800 text-[#1d1d1f] dark:text-slate-300 apple-press transition-colors font-medium"
           >
             🎬 影音与 AI 旗舰
           </button>
           <button
             onClick={() => handleApplyPresetTemplate('gaming')}
-            className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 border border-black/[0.06] dark:border-slate-800 text-[#1d1d1f] dark:text-slate-300 apple-press transition-colors font-medium"
           >
             🎮 游戏低延迟加速
           </button>
           <button
             onClick={() => handleApplyPresetTemplate('privacy')}
-            className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 border border-black/[0.06] dark:border-slate-800 text-[#1d1d1f] dark:text-slate-300 apple-press transition-colors font-medium"
           >
             🛡️ 强力去广告与隐私
           </button>
           <button
             onClick={() => handleApplyPresetTemplate('minimal')}
-            className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 border border-black/[0.06] dark:border-slate-800 text-[#1d1d1f] dark:text-slate-300 apple-press transition-colors font-medium"
           >
             ⚡ 极简精简模式
           </button>
@@ -293,14 +293,14 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
 
       {/* TAB 1: YAML PREVIEW */}
       {activeTab === 'yaml' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-2xl">
+        <div className="apple-glass rounded-3xl border border-black/[0.08] dark:border-white/[0.08] p-4 sm:p-6 space-y-4 shadow-xl">
           
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-200 font-mono">
+              <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200 font-mono">
                 /etc/openclash/config.yaml
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 font-medium">
                 语法校验通过 (YAML 1.2)
               </span>
             </div>
@@ -309,16 +309,16 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
               <button
                 id="btn-copy-yaml"
                 onClick={handleCopyYaml}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#1d1d1f] dark:text-slate-200 text-xs font-semibold border border-black/[0.08] dark:border-slate-700 apple-press transition-colors"
               >
-                {copiedType === 'yaml' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedType === 'yaml' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedType === 'yaml' ? '已复制 YAML' : '复制配置'}</span>
               </button>
 
               <button
                 id="btn-download-yaml"
                 onClick={handleDownloadYaml}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>下载 .yaml 配置文件</span>
@@ -327,7 +327,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           </div>
 
           {/* Code Viewer */}
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 max-h-[580px] overflow-y-auto leading-relaxed selection:bg-indigo-500/30">
+          <div className="bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-4 font-mono text-xs text-[#1d1d1f] dark:text-slate-300 max-h-[580px] overflow-y-auto leading-relaxed selection:bg-indigo-500/30">
             <pre className="whitespace-pre">{yamlContent}</pre>
           </div>
 
@@ -336,15 +336,15 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
 
       {/* TAB 2: UCI SCRIPT */}
       {activeTab === 'uci' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-2xl">
+        <div className="apple-glass rounded-3xl border border-black/[0.08] dark:border-white/[0.08] p-4 sm:p-6 space-y-4 shadow-xl">
           
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
             <div>
-              <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-xs font-bold text-[#1d1d1f] dark:text-white flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-indigo-600 dark:text-cyan-400" />
                 ImmortalWRT UCI 命令行配置脚本
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-[#6e6e73] dark:text-slate-400 mt-0.5">
                 可直接复制并粘贴到 ImmortalWRT 网页终端 (TTYD) 或 SSH 终端中执行
               </p>
             </div>
@@ -352,7 +352,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
             <button
               id="btn-copy-uci"
               onClick={handleCopyUci}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-md shadow-cyan-600/20 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
             >
               {copiedType === 'uci' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedType === 'uci' ? '已复制脚本' : '一键复制 UCI 脚本'}</span>
@@ -360,7 +360,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           </div>
 
           {/* Script Content */}
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-cyan-300 max-h-[500px] overflow-y-auto leading-relaxed">
+          <div className="bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-4 font-mono text-xs text-indigo-900 dark:text-cyan-300 max-h-[500px] overflow-y-auto leading-relaxed">
             <pre className="whitespace-pre">{uciScript}</pre>
           </div>
 
@@ -369,22 +369,22 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
 
       {/* TAB 4: IPK PACKAGE & DEPLOYMENT */}
       {activeTab === 'ipk' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-6 shadow-2xl">
+        <div className="apple-glass rounded-3xl border border-black/[0.08] dark:border-white/[0.08] p-4 sm:p-6 space-y-6 shadow-xl">
           
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.06] dark:border-white/[0.06]">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-inner">
+              <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                 <Package className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white">OpenWrt / ImmortalWRT 多架构 IPK 软件包</h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                  <h3 className="text-sm font-bold text-[#1d1d1f] dark:text-white">OpenWrt / ImmortalWRT 多架构 IPK 软件包</h3>
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 font-mono font-medium">
                     6 架构已就绪 • 1.4 MB/包
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[#6e6e73] dark:text-slate-400 mt-0.5">
                   标准 opkg / LuCI 插件包，原生适配 ImmortalWRT 23.05+ / OpenWrt 21.02 ~ 24.10+，内置全量离线资产
                 </p>
               </div>
@@ -395,7 +395,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                 id="btn-download-ipk"
                 href={`/${currentArchInfo.file}`}
                 download={currentArchInfo.file}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-600/25 transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-sm apple-press transition-all"
               >
                 <Download className="w-4 h-4" />
                 <span>下载当前架构包 ({currentArchInfo.tag})</span>
@@ -423,9 +423,9 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                     ]);
                   }, 1200);
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#1d1d1f] dark:text-slate-200 text-xs font-medium border border-black/[0.08] dark:border-slate-700 apple-press transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isBuildingIpk ? 'animate-spin text-amber-400' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isBuildingIpk ? 'animate-spin text-amber-500' : ''}`} />
                 <span>{isBuildingIpk ? '打包中...' : '重新编译全部架构'}</span>
               </button>
             </div>
@@ -434,12 +434,12 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           {/* Architecture Selector Cards */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                <Cpu className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200 flex items-center gap-1.5">
+                <Cpu className="w-4 h-4 text-indigo-600 dark:text-cyan-400" />
                 <span>选择目标路由器 CPU 架构 (Architecture Selector)</span>
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">
-                当前选择: <strong className="text-amber-400">{currentArchInfo.id}</strong>
+              <span className="text-[11px] text-[#6e6e73] dark:text-slate-400 font-mono">
+                当前选择: <strong className="text-amber-600 dark:text-amber-400 font-bold">{currentArchInfo.id}</strong>
               </span>
             </div>
 
@@ -450,30 +450,30 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                   <button
                     key={arch.id}
                     onClick={() => setSelectedArch(arch.id)}
-                    className={`p-3 rounded-xl text-left border transition-all flex flex-col justify-between ${
+                    className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between apple-press ${
                       isSelected
-                        ? 'bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30'
-                        : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-950'
+                        ? 'bg-amber-500/10 border-amber-500/50 shadow-md ring-1 ring-amber-500/30'
+                        : 'bg-slate-100/70 dark:bg-slate-950/60 border-black/[0.06] dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 w-full">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold ${isSelected ? 'text-amber-300' : 'text-slate-200'}`}>
+                        <span className={`text-xs font-semibold ${isSelected ? 'text-amber-700 dark:text-amber-300' : 'text-[#1d1d1f] dark:text-slate-200'}`}>
                           {arch.name}
                         </span>
                       </div>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
-                        isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+                        isSelected ? 'bg-amber-500 text-white dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-[#6e6e73] dark:text-slate-300'
                       }`}>
                         {arch.tag}
                       </span>
                     </div>
-                    <div className="mt-1.5 text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                    <div className="mt-1.5 text-[11px] text-[#6e6e73] dark:text-slate-400 line-clamp-2 leading-relaxed">
                       {arch.desc}
                     </div>
-                    <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <div className="mt-2.5 pt-2 border-t border-black/[0.06] dark:border-slate-800/80 flex items-center justify-between text-[10px] text-[#86868b] dark:text-slate-500 font-mono">
                       <span>{arch.size}</span>
-                      <span className="text-slate-400 truncate max-w-[160px]">适用: {arch.devices.split(',')[0]}</span>
+                      <span className="text-[#1d1d1f] dark:text-slate-400 truncate max-w-[160px]">适用: {arch.devices.split(',')[0]}</span>
                     </div>
                   </button>
                 );
@@ -482,16 +482,16 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           </div>
 
           {/* Current Arch Info Banner */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+          <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-black/[0.06] dark:border-slate-800/80">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-emerald-400">{currentArchInfo.file}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
+                  <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">{currentArchInfo.file}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-[#1d1d1f] dark:text-slate-300 font-mono">
                     {currentArchInfo.size}
                   </span>
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-[#6e6e73] dark:text-slate-400 mt-1">
                   <strong>适用设备代表：</strong>{currentArchInfo.devices}
                 </div>
               </div>
@@ -500,7 +500,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                 <a
                   href={`/${currentArchInfo.file}`}
                   download={currentArchInfo.file}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 text-xs font-semibold apple-press transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>下载此 IPK</span>
@@ -512,35 +512,35 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                     setCopiedType(`sha-${currentArchInfo.id}`);
                     setTimeout(() => setCopiedType(null), 1500);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-[#1d1d1f] dark:text-slate-300 border border-black/[0.06] dark:border-slate-700 text-xs apple-press transition-colors font-medium"
                 >
-                  {copiedType === `sha-${currentArchInfo.id}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedType === `sha-${currentArchInfo.id}` ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>复制 SHA256</span>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80 overflow-x-auto">
-              <span className="text-slate-500 shrink-0 select-none">SHA256:</span>
-              <span className="text-slate-300 select-all font-bold">{currentArchInfo.sha256}</span>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-[#6e6e73] dark:text-slate-400 bg-slate-200/70 dark:bg-slate-900/80 p-2.5 rounded-xl border border-black/[0.06] dark:border-slate-800/80 overflow-x-auto">
+              <span className="text-[#86868b] dark:text-slate-500 shrink-0 select-none">SHA256:</span>
+              <span className="text-[#1d1d1f] dark:text-slate-300 select-all font-bold">{currentArchInfo.sha256}</span>
             </div>
           </div>
 
           {/* Installation Guides */}
           <div className="space-y-4">
-            <h4 className="text-xs font-bold text-white flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-emerald-400" />
+            <h4 className="text-xs font-bold text-[#1d1d1f] dark:text-white flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               ImmortalWRT / OpenWrt 路由器三种安装方式 ({currentArchInfo.tag})
             </h4>
 
             {/* Method 1: SSH opkg install */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold flex items-center justify-center border border-emerald-500/30">
+                  <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center justify-center border border-emerald-200 dark:border-emerald-500/30">
                     1
                   </span>
-                  <span className="text-xs font-bold text-slate-200">方法一：SSH 终端一键命令安装 (自动匹配当前 {currentArchInfo.id} 架构)</span>
+                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法一：SSH 终端一键命令安装 (自动匹配当前 {currentArchInfo.id} 架构)</span>
                 </div>
                 <button
                   onClick={() => {
@@ -549,14 +549,14 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                     setCopiedType('opkg-cmd');
                     setTimeout(() => setCopiedType(null), 1500);
                   }}
-                  className="flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                  className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium transition-colors"
                 >
-                  {copiedType === 'opkg-cmd' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  {copiedType === 'opkg-cmd' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedType === 'opkg-cmd' ? '已复制命令' : '复制一键命令'}</span>
                 </button>
               </div>
 
-              <div className="p-3 bg-slate-900 rounded-lg font-mono text-xs text-emerald-300/90 leading-relaxed overflow-x-auto border border-slate-800">
+              <div className="p-3 bg-slate-200/80 dark:bg-slate-900 rounded-xl font-mono text-xs text-emerald-800 dark:text-emerald-300/90 leading-relaxed overflow-x-auto border border-black/[0.06] dark:border-slate-800">
                 <div className="text-slate-500"># 1. 登录路由器终端后执行 (TTYD / SSH)</div>
                 <div>opkg update</div>
                 <div>wget -O /tmp/{currentArchInfo.file} http://{settings.routerHost}:{settings.controllerPort}/{currentArchInfo.file}</div>
@@ -569,29 +569,29 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
             {/* Method 2 & 3 in 2 columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold flex items-center justify-center border border-indigo-500/30">
+                  <span className="w-5 h-5 rounded-full bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold flex items-center justify-center border border-indigo-200 dark:border-indigo-500/30">
                     2
                   </span>
-                  <span className="text-xs font-bold text-slate-200">方法二：LuCI 网页后台直接上传</span>
+                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法二：LuCI 网页后台直接上传</span>
                 </div>
-                <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside leading-relaxed">
-                  <li>选择上方匹配您 CPU 的架构，点击下载 <code className="text-amber-300 font-mono text-[11px]">{currentArchInfo.file}</code>；</li>
-                  <li>登录路由器后台：<strong className="text-slate-200">系统 -&gt; 软件包</strong>；</li>
+                <ol className="text-xs text-[#6e6e73] dark:text-slate-400 space-y-1 list-decimal list-inside leading-relaxed">
+                  <li>选择上方匹配您 CPU 的架构，点击下载 <code className="text-amber-700 dark:text-amber-300 font-mono text-[11px]">{currentArchInfo.file}</code>；</li>
+                  <li>登录路由器后台：<strong className="text-[#1d1d1f] dark:text-slate-200">系统 -&gt; 软件包</strong>；</li>
                   <li>点击「上传软件包...」选择刚下载的 IPK；</li>
                   <li>点击「安装」，完成后刷新页面即可在「服务」中看到「OpenClash 拓扑编排」入口。</li>
                 </ol>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold flex items-center justify-center border border-cyan-500/30">
+                  <span className="w-5 h-5 rounded-full bg-indigo-50 dark:bg-cyan-500/20 text-indigo-700 dark:text-cyan-300 text-[10px] font-bold flex items-center justify-center border border-indigo-200 dark:border-cyan-500/30">
                     3
                   </span>
-                  <span className="text-xs font-bold text-slate-200">方法三：SCP 离线传输与安装</span>
+                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法三：SCP 离线传输与安装</span>
                 </div>
-                <div className="p-2.5 bg-slate-900 rounded-lg font-mono text-[11px] text-cyan-300/90 leading-relaxed border border-slate-800">
+                <div className="p-2.5 bg-slate-200/80 dark:bg-slate-900 rounded-xl font-mono text-[11px] text-indigo-900 dark:text-cyan-300/90 leading-relaxed border border-black/[0.06] dark:border-slate-800">
                   <div>scp dist-ipk/{currentArchInfo.file} root@{settings.routerHost}:/tmp/</div>
                   <div>ssh root@{settings.routerHost} "opkg install /tmp/{currentArchInfo.file} &amp;&amp; rm -f /tmp/luci-indexcache &amp;&amp; /etc/init.d/rpcd restart"</div>
                 </div>
@@ -605,15 +605,15 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
             
             {/* Build logs */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <FileCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-300 flex items-center gap-1.5">
+                <FileCheck className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span>多架构构建日志输出</span>
               </span>
-              <div className="p-3.5 bg-slate-950 rounded-xl font-mono text-[11px] text-slate-300 space-y-1 border border-slate-800 h-48 overflow-y-auto">
+              <div className="p-3.5 bg-slate-100/90 dark:bg-slate-950 rounded-2xl font-mono text-[11px] text-[#1d1d1f] dark:text-slate-300 space-y-1 border border-black/[0.06] dark:border-slate-800 h-48 overflow-y-auto">
                 {ipkBuildLogs.map((log, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <span className="text-slate-600 select-none">&gt;</span>
-                    <span className={idx === ipkBuildLogs.length - 1 ? 'text-emerald-400 font-bold' : 'text-slate-300'}>{log}</span>
+                    <span className="text-slate-400 dark:text-slate-600 select-none">&gt;</span>
+                    <span className={idx === ipkBuildLogs.length - 1 ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-[#6e6e73] dark:text-slate-300'}>{log}</span>
                   </div>
                 ))}
               </div>
@@ -621,29 +621,120 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
 
             {/* Tree Structure */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Code className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-300 flex items-center gap-1.5">
+                <Code className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span>IPK 内部架构与目录体系</span>
               </span>
-              <div className="p-3.5 bg-slate-950 rounded-xl font-mono text-[11px] text-slate-400 space-y-1 border border-slate-800 h-48 overflow-y-auto leading-tight">
-                <div className="text-amber-300">📦 {currentArchInfo.file} (Arch: {currentArchInfo.id})</div>
-                <div className="pl-3 text-slate-300">├── debian-binary (2.0)</div>
-                <div className="pl-3 text-slate-300">├── control.tar.gz</div>
-                <div className="pl-6 text-slate-400">├── control (Architecture: {currentArchInfo.id})</div>
-                <div className="pl-6 text-slate-400">├── postinst (自动刷新 /tmp/luci-indexcache 与 rpcd)</div>
-                <div className="pl-6 text-slate-400">└── prerm (卸载前清理)</div>
-                <div className="pl-3 text-slate-300">└── data.tar.gz</div>
-                <div className="pl-6 text-cyan-300">├── /usr/lib/lua/luci/controller/openclash_flow.lua</div>
-                <div className="pl-6 text-cyan-300">├── /usr/lib/lua/luci/view/openclash_flow/index.htm</div>
-                <div className="pl-6 text-cyan-300">├── /usr/share/rpcd/acl.d/luci-app-openclash-flow.json</div>
-                <div className="pl-6 text-emerald-300">├── /etc/config/openclash_flow (UCI 默认配置)</div>
-                <div className="pl-6 text-emerald-300">├── /usr/bin/openclash-flow-cli (CLI 诊断工具)</div>
-                <div className="pl-6 text-indigo-300">└── /www/luci-static/resources/openclash-flow/* (前端生产包)</div>
+              <div className="p-3.5 bg-slate-100/90 dark:bg-slate-950 rounded-2xl font-mono text-[11px] text-[#6e6e73] dark:text-slate-400 space-y-1 border border-black/[0.06] dark:border-slate-800 h-48 overflow-y-auto leading-tight">
+                <div className="text-amber-700 dark:text-amber-300 font-bold">📦 {currentArchInfo.file} (Arch: {currentArchInfo.id})</div>
+                <div className="pl-3 text-[#1d1d1f] dark:text-slate-300">├── debian-binary (2.0)</div>
+                <div className="pl-3 text-[#1d1d1f] dark:text-slate-300">├── control.tar.gz</div>
+                <div className="pl-6 text-[#6e6e73] dark:text-slate-400">├── control (Architecture: {currentArchInfo.id})</div>
+                <div className="pl-6 text-[#6e6e73] dark:text-slate-400">├── postinst (自动刷新 /tmp/luci-indexcache 与 rpcd)</div>
+                <div className="pl-6 text-[#6e6e73] dark:text-slate-400">└── prerm (卸载前清理)</div>
+                <div className="pl-3 text-[#1d1d1f] dark:text-slate-300">└── data.tar.gz</div>
+                <div className="pl-6 text-indigo-600 dark:text-cyan-300">├── /usr/lib/lua/luci/controller/openclash_flow.lua</div>
+                <div className="pl-6 text-indigo-600 dark:text-cyan-300">├── /usr/lib/lua/luci/view/openclash_flow/index.htm</div>
+                <div className="pl-6 text-indigo-600 dark:text-cyan-300">├── /usr/share/rpcd/acl.d/luci-app-openclash-flow.json</div>
+                <div className="pl-6 text-emerald-600 dark:text-emerald-300">├── /etc/config/openclash_flow (UCI 默认配置)</div>
+                <div className="pl-6 text-emerald-600 dark:text-emerald-300">├── /usr/bin/openclash-flow-cli (CLI 诊断工具)</div>
+                <div className="pl-6 text-purple-600 dark:text-indigo-300">└── /www/luci-static/resources/openclash-flow/* (前端生产包)</div>
               </div>
             </div>
 
           </div>
 
+        </div>
+      )}
+
+      {/* TAB 3: ROUTER LIVE SYNC */}
+      {activeTab === 'sync' && (
+        <div className="apple-glass rounded-3xl border border-black/[0.08] dark:border-white/[0.08] p-4 sm:p-6 space-y-6 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.06] dark:border-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25">
+                <Router className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#1d1d1f] dark:text-white">ImmortalWRT / OpenClash 路由器实时同步</h3>
+                <p className="text-xs text-[#6e6e73] dark:text-slate-400 mt-0.5">
+                  通过 RESTful API 直接将最新的分流规则与节点推送到路由器热重载
+                </p>
+              </div>
+            </div>
+
+            <button
+              id="btn-sync-router"
+              disabled={isSyncing}
+              onClick={handlePushToRouter}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors disabled:opacity-50"
+            >
+              <Send className={`w-4 h-4 ${isSyncing ? 'animate-bounce' : ''}`} />
+              <span>{isSyncing ? '同步推送中...' : '推送到路由器并热重载'}</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-3">
+              <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">目标路由器参数</span>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between py-1 border-b border-black/[0.04] dark:border-slate-800">
+                  <span className="text-[#6e6e73] dark:text-slate-400">路由器 IP / 域名:</span>
+                  <span className="font-mono font-medium text-[#1d1d1f] dark:text-slate-200">{settings.routerHost}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-black/[0.04] dark:border-slate-800">
+                  <span className="text-[#6e6e73] dark:text-slate-400">OpenClash 控制端口:</span>
+                  <span className="font-mono font-medium text-[#1d1d1f] dark:text-slate-200">{settings.controllerPort}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-black/[0.04] dark:border-slate-800">
+                  <span className="text-[#6e6e73] dark:text-slate-400">混合端口 (Mixed Port):</span>
+                  <span className="font-mono font-medium text-[#1d1d1f] dark:text-slate-200">{settings.mixedPort}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-[#6e6e73] dark:text-slate-400">运行模式:</span>
+                  <span className="font-medium text-indigo-600 dark:text-cyan-300 uppercase">{settings.mode}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-3">
+              <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">编排包内容指标</span>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between py-1 border-b border-black/[0.04] dark:border-slate-800">
+                  <span className="text-[#6e6e73] dark:text-slate-400">当前活跃代理节点:</span>
+                  <span className="font-mono font-bold text-indigo-600 dark:text-cyan-400">{proxies.length} 个</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-black/[0.04] dark:border-slate-800">
+                  <span className="text-[#6e6e73] dark:text-slate-400">策略组 (Policy Groups):</span>
+                  <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{policyGroups.length} 个</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-black/[0.04] dark:border-slate-800">
+                  <span className="text-[#6e6e73] dark:text-slate-400">分流规则 (Traffic Rules):</span>
+                  <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{rules.length} 条</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-[#6e6e73] dark:text-slate-400">DNS 增强模式:</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400 font-mono">fake-ip / redir-host</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {syncResult && (
+            <div
+              className={`p-4 rounded-2xl flex items-start gap-3 text-xs ${
+                syncResult.success
+                  ? 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300'
+              }`}
+            >
+              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm">热推送操作完成</p>
+                <p className="mt-1">{syncResult.message}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

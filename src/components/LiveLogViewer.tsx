@@ -226,16 +226,16 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
     <div className="space-y-4">
       
       {/* Header & Controls Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 backdrop-blur-sm">
+      <div className="apple-glass rounded-3xl p-4 sm:p-5 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xl">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-purple-400" />
+          <h2 className="text-base font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             OpenClash 实时数据流监控与日志分析
-            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-normal">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium border border-purple-200 dark:border-purple-500/30">
               实时推流中
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
             实时捕获局域网设备的 DNS 请求、规则命中匹配、出站隧道与异常阻断
           </p>
         </div>
@@ -245,20 +245,20 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
           <button
             id="btn-toggle-log-stream"
             onClick={() => setIsPaused(!isPaused)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border apple-press transition-colors ${
               isPaused
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
-                : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/40 hover:bg-amber-100 dark:hover:bg-amber-500/30'
+                : 'bg-slate-100 dark:bg-slate-800 text-[#1d1d1f] dark:text-slate-200 border-black/[0.08] dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
-            {isPaused ? <Play className="w-3.5 h-3.5 fill-amber-300" /> : <Pause className="w-3.5 h-3.5" />}
+            {isPaused ? <Play className="w-3.5 h-3.5 fill-amber-600 dark:fill-amber-300" /> : <Pause className="w-3.5 h-3.5" />}
             <span>{isPaused ? '恢复推流' : '暂停推流'}</span>
           </button>
 
           {/* Inject Test Request */}
           <button
             onClick={handleInjectTestLog}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-950/80 hover:bg-purple-900 text-purple-300 text-xs font-semibold border border-purple-500/30 transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-500/30 apple-press transition-colors"
             title="手动注入一条即时流量访问记录"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -268,16 +268,16 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
           {/* Copy Logs */}
           <button
             onClick={handleCopyLogs}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#1d1d1f] dark:text-slate-200 text-xs font-semibold border border-black/[0.08] dark:border-slate-700 apple-press transition-colors"
           >
-            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{isCopied ? '已复制' : '复制日志'}</span>
           </button>
 
           {/* Download Logs */}
           <button
             onClick={handleDownloadLogs}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#1d1d1f] dark:text-slate-200 text-xs font-semibold border border-black/[0.08] dark:border-slate-700 apple-press transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>导出</span>
@@ -286,7 +286,7 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
           {/* Clear Logs */}
           <button
             onClick={() => setLogs([])}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 border border-black/[0.08] dark:border-slate-700 apple-press transition-colors"
             title="清空日志"
           >
             <Trash2 className="w-4 h-4" />
@@ -295,10 +295,10 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+      <div className="apple-glass rounded-2xl p-3 border border-black/[0.06] dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-md">
         
         {/* Level Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto text-xs">
+        <div className="flex items-center gap-1 overflow-x-auto text-xs pb-1 sm:pb-0">
           {[
             { id: 'all', label: '全部' },
             { id: 'dns', label: '📡 DNS 解析' },
@@ -310,10 +310,10 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
             <button
               key={tab.id}
               onClick={() => setLevelFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-xl whitespace-nowrap font-medium transition-all apple-press ${
                 levelFilter === tab.id
-                  ? 'bg-purple-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  ? 'bg-purple-600 text-white font-semibold shadow-sm'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'
               }`}
             >
               {tab.label}
@@ -324,22 +324,22 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
         {/* Search & AutoScroll */}
         <div className="flex items-center gap-3">
           <div className="relative flex-1 sm:w-60">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索 IP / 域名 / 规则..."
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:border-purple-500 focus:outline-none"
+              className="w-full bg-slate-100/90 dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#1d1d1f] dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/20"
             />
           </div>
 
-          <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none whitespace-nowrap">
+          <label className="flex items-center gap-1.5 text-xs text-[#6e6e73] dark:text-slate-400 cursor-pointer select-none whitespace-nowrap font-medium">
             <input
               type="checkbox"
               checked={autoScroll}
               onChange={(e) => setAutoScroll(e.target.checked)}
-              className="rounded bg-slate-900 border-slate-800 text-purple-600 focus:ring-0"
+              className="rounded bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-purple-600 focus:ring-0"
             />
             <span>自动滚屏</span>
           </label>
@@ -350,10 +350,10 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       {/* Terminal Viewport */}
       <div
         ref={logContainerRef}
-        className="bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs max-h-[580px] min-h-[400px] overflow-y-auto space-y-1.5 shadow-2xl"
+        className="bg-slate-100/90 dark:bg-slate-950 border border-black/[0.08] dark:border-white/[0.08] rounded-3xl p-4 sm:p-5 font-mono text-xs max-h-[580px] min-h-[400px] overflow-y-auto space-y-1.5 shadow-xl"
       >
         {filteredLogs.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-600 space-y-2">
+          <div className="h-64 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 space-y-2">
             <Terminal className="w-8 h-8 opacity-40 animate-pulse" />
             <p>暂无符合筛选条件的日志事件</p>
           </div>
@@ -368,34 +368,34 @@ export const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
             return (
               <div
                 key={log.id}
-                className="flex items-start gap-2.5 py-1 px-2 rounded-lg hover:bg-slate-900/80 transition-colors group"
+                className="flex items-start gap-2.5 py-1.5 px-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors group"
               >
                 {/* Timestamp */}
-                <span className="text-slate-500 shrink-0 select-none text-[11px]">
+                <span className="text-slate-400 dark:text-slate-500 shrink-0 select-none text-[11px] pt-0.5">
                   [{log.timestamp}]
                 </span>
 
                 {/* Level Tag */}
                 <span
-                  className={`text-[10px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0 ${
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shrink-0 border ${
                     isDns
-                      ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/30'
+                      ? 'bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30'
                       : isMatch
-                      ? 'bg-indigo-950 text-indigo-300 border border-indigo-500/30'
+                      ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30'
                       : isWarn
-                      ? 'bg-amber-950 text-amber-300 border border-amber-500/30'
+                      ? 'bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30'
                       : isError
-                      ? 'bg-rose-950 text-rose-300 border border-rose-500/30'
+                      ? 'bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/30'
                       : isTraffic
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-slate-800 text-slate-400'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-slate-700'
                   }`}
                 >
                   {log.level}
                 </span>
 
                 {/* Log Payload */}
-                <div className="flex-1 text-slate-300 leading-relaxed break-all">
+                <div className="flex-1 text-[#1d1d1f] dark:text-slate-200 leading-relaxed break-all pt-0.5">
                   <span>{log.message}</span>
                 </div>
               </div>

@@ -92,7 +92,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#090a0f] text-[#1d1d1f] dark:text-[#f5f5f7] flex flex-col selection:bg-indigo-500/30 selection:text-indigo-600 dark:selection:text-indigo-200 transition-colors duration-200">
       
       {/* Top Header */}
       <Header
@@ -164,16 +164,16 @@ export default function App() {
       </main>
 
       {/* Footer Info */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-600">
+      <footer className="border-t border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#090a0f]/80 py-4 text-center text-xs text-[#86868b] dark:text-[#71717a] transition-colors">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>OpenClash Flow v1.0 • 专为 ImmortalWRT 路由器优化</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+            <span className="text-[#1d1d1f] dark:text-[#d4d4d8]">OpenClash Flow v1.0 • 专为 ImmortalWRT 路由器优化</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-500">
+          <div className="flex items-center gap-4 text-[#6e6e73] dark:text-[#8e8e93]">
             <button
               onClick={() => setShowArchitectureModal(true)}
-              className="hover:text-indigo-400 transition-colors"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               系统架构与交互流程
             </button>
@@ -182,7 +182,7 @@ export default function App() {
               href="https://github.com/vernesong/openclash"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-indigo-400 transition-colors flex items-center gap-1"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1"
             >
               <span>GitHub vernesong/openclash</span>
               <ExternalLink className="w-3 h-3" />

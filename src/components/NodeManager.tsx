@@ -248,16 +248,16 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
     <div className="space-y-5">
       
       {/* Top Banner & Control Strip */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 backdrop-blur-sm">
+      <div className="apple-glass rounded-3xl p-4 sm:p-5 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xl">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Radio className="w-5 h-5 text-cyan-400" />
+          <h2 className="text-base font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight flex items-center gap-2">
+            <Radio className="w-5 h-5 text-indigo-500 dark:text-cyan-400" />
             节点与订阅管理
-            <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-normal">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-cyan-500/20 text-indigo-700 dark:text-cyan-300 font-medium border border-indigo-200 dark:border-cyan-500/30">
               支持 VLESS / Hysteria2 / Trojan / VMess / SS
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
             一键导入订阅链接、批量测速、自动按地区国家分类，并无缝注入分流策略组
           </p>
         </div>
@@ -268,9 +268,9 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
             id="btn-test-latencies"
             disabled={isTestingLatency || proxies.length === 0}
             onClick={handleTestAllLatencies}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isTestingLatency ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-amber-500 dark:text-amber-400 ${isTestingLatency ? 'animate-spin' : ''}`} />
             <span>{isTestingLatency ? '测速中...' : '全员测速'}</span>
           </button>
 
@@ -278,17 +278,17 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           <button
             id="btn-auto-group"
             onClick={handleAutoGroupByRegion}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs font-semibold border border-indigo-500/30 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200 dark:border-indigo-500/30 apple-press transition-colors"
             title="根据节点名称自动创建 香港/日本/美国/新加坡 策略组"
           >
-            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>智能生成地区组</span>
           </button>
 
           {/* Manual Add Node */}
           <button
             onClick={() => setShowAddNodeModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>添加单节点</span>
@@ -298,7 +298,7 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           <button
             id="btn-open-import"
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-all"
           >
             <DownloadCloud className="w-4 h-4" />
             <span>一键导入订阅/节点</span>
@@ -308,13 +308,13 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
 
       {/* Country Filter Strip */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-slate-500 font-medium whitespace-nowrap">地区筛选:</span>
+        <span className="text-[#6e6e73] dark:text-[#86868b] font-medium whitespace-nowrap">地区筛选:</span>
         <button
           onClick={() => setCountryFilter('all')}
-          className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+          className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all apple-press font-medium ${
             countryFilter === 'all'
-              ? 'bg-cyan-600 text-white font-semibold'
-              : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
           }`}
         >
           全部节点 ({proxies.length})
@@ -326,10 +326,10 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
             <button
               key={c}
               onClick={() => setCountryFilter(c)}
-              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all apple-press font-medium flex items-center gap-1.5 ${
                 countryFilter === c
-                  ? 'bg-cyan-600 text-white font-semibold'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
               }`}
             >
               <span>{flag}</span>
@@ -348,27 +348,27 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           return (
             <div
               key={node.id}
-              className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/5 transition-all duration-200 space-y-3 flex flex-col justify-between"
+              className="apple-glass rounded-3xl p-4 sm:p-5 border border-black/[0.08] dark:border-white/[0.08] hover:border-indigo-400/50 hover:shadow-xl transition-all duration-200 space-y-3 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xl shrink-0">{node.flag || '🌐'}</span>
                     <div>
-                      <h3 className="text-xs font-bold text-white truncate max-w-[170px]" title={node.name}>
+                      <h3 className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] truncate max-w-[170px]" title={node.name}>
                         {node.name}
                       </h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/30 font-semibold">
+                        <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 font-semibold">
                           {node.type}
                         </span>
                         {node.tls && (
-                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-500/20">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 font-medium">
                             TLS
                           </span>
                         )}
                         {node.realityOpts && (
-                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-purple-950/60 text-purple-300 border border-purple-500/20">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 font-medium">
                             REALITY
                           </span>
                         )}
@@ -381,19 +381,19 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                     <span
                       className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         (node.latency || 999) < 80
-                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                          ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30'
                           : (node.latency || 999) < 160
-                          ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                          : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                          ? 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30'
+                          : 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30'
                       }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
                           (node.latency || 999) < 80
-                            ? 'bg-emerald-400'
+                            ? 'bg-emerald-500'
                             : (node.latency || 999) < 160
-                            ? 'bg-amber-400'
-                            : 'bg-rose-400'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500'
                         }`}
                       />
                       {node.latency ? `${node.latency} ms` : '未测速'}
@@ -402,45 +402,45 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                 </div>
 
                 {/* Server & Port details */}
-                <div className="mt-3 p-2 rounded-xl bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-400 space-y-1">
+                <div className="mt-3 p-2.5 rounded-2xl bg-slate-100/90 dark:bg-slate-950/80 border border-black/[0.06] dark:border-slate-800/80 font-mono text-[11px] space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">服务器:</span>
-                    <span className="text-slate-300 truncate max-w-[150px]">{node.server}</span>
+                    <span className="text-[#6e6e73] dark:text-slate-500">服务器:</span>
+                    <span className="text-[#1d1d1f] dark:text-slate-300 truncate max-w-[150px] font-medium">{node.server}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">端口:</span>
-                    <span className="text-slate-300">{node.port}</span>
+                    <span className="text-[#6e6e73] dark:text-slate-500">端口:</span>
+                    <span className="text-[#1d1d1f] dark:text-slate-300 font-medium">{node.port}</span>
                   </div>
                   {node.sni && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500">SNI / Host:</span>
-                      <span className="text-slate-300 truncate max-w-[140px]">{node.sni}</span>
+                      <span className="text-[#6e6e73] dark:text-slate-500">SNI / Host:</span>
+                      <span className="text-[#1d1d1f] dark:text-slate-300 truncate max-w-[140px] font-medium">{node.sni}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Card Footer Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
-                <span className="text-[10px] text-slate-500 font-mono">
+              <div className="flex items-center justify-between pt-2 border-t border-black/[0.06] dark:border-slate-800/60 text-xs">
+                <span className="text-[10px] text-[#86868b] dark:text-slate-500 font-mono">
                   ID: {node.id.slice(0, 10)}
                 </span>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(node, null, 2));
                       setCopiedId(node.id);
                       setTimeout(() => setCopiedId(null), 1500);
                     }}
-                    className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                    className="p-1.5 text-[#6e6e73] dark:text-slate-400 hover:text-[#1d1d1f] dark:hover:text-white hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-lg apple-press transition-colors"
                     title="复制节点 JSON"
                   >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                   <button
                     onClick={() => handleDeleteNode(node.id)}
-                    className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                    className="p-1.5 text-[#86868b] hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-lg apple-press transition-colors"
                     title="删除节点"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -455,16 +455,16 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
 
       {/* One-Click Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="apple-glass rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-black/[0.1] dark:border-white/[0.12] animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <DownloadCloud className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-base font-bold text-white">一键导入订阅 / 节点集</h3>
+                <DownloadCloud className="w-5 h-5 text-indigo-500 dark:text-cyan-400" />
+                <h3 className="text-base font-semibold text-[#1d1d1f] dark:text-white">一键导入订阅 / 节点集</h3>
               </div>
               <button
                 onClick={() => setShowImportModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.06] hover:bg-black/[0.1] dark:hover:bg-white/[0.12] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white flex items-center justify-center text-xs apple-press transition-colors"
               >
                 ✕
               </button>
@@ -472,13 +472,13 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
 
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between">
-                <label className="text-slate-300 font-medium">
+                <label className="text-[#6e6e73] dark:text-slate-300 font-medium">
                   支持格式: Clash YAML、Base64 订阅、vless://、hysteria2://、trojan://、vmess://、ss://
                 </label>
                 <button
                   type="button"
                   onClick={handleLoadSampleSubscription}
-                  className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1"
+                  className="text-[11px] text-indigo-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-medium"
                 >
                   <Sparkles className="w-3 h-3" />
                   填入示例多协议订阅
@@ -490,32 +490,32 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                 placeholder="粘贴订阅链接、Clash YAML proxies 配置段落，或 Base64 编码的节点列表..."
                 value={importInput}
                 onChange={(e) => setImportInput(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 font-mono text-xs focus:border-cyan-500 focus:outline-none"
+                className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-3 text-[#1d1d1f] dark:text-slate-200 font-mono text-xs focus:border-indigo-500 focus:outline-none"
               />
 
               {importStatus && (
                 <div
-                  className={`p-3 rounded-xl flex items-start gap-2 text-xs ${
+                  className={`p-3 rounded-2xl flex items-start gap-2 text-xs ${
                     importStatus.count > 0
-                      ? 'bg-emerald-950/50 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-950/50 border border-rose-500/30 text-rose-300'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300'
                   }`}
                 >
                   {importStatus.count > 0 ? (
-                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                   )}
                   <span>{importStatus.message}</span>
                 </div>
               )}
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-black/[0.06] dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-medium border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
               >
                 关闭
               </button>
@@ -523,7 +523,7 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                 type="button"
                 disabled={isImporting || !importInput.trim()}
                 onClick={handlePerformImport}
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-cyan-500/20 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press disabled:opacity-50 transition-colors"
               >
                 {isImporting ? '解析中...' : '开始导入与自动分类'}
               </button>
@@ -534,20 +534,20 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
 
       {/* Manual Add Single Node Modal */}
       {showAddNodeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <form
             onSubmit={handleAddManualNode}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            className="apple-glass rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-black/[0.1] dark:border-white/[0.12] animate-in zoom-in-95 duration-150"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-cyan-400" />
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+              <h3 className="text-base font-semibold text-[#1d1d1f] dark:text-white flex items-center gap-2">
+                <Plus className="w-5 h-5 text-indigo-500 dark:text-cyan-400" />
                 手动添加代理节点
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddNodeModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.06] hover:bg-black/[0.1] dark:hover:bg-white/[0.12] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white flex items-center justify-center text-xs apple-press transition-colors"
               >
                 ✕
               </button>
@@ -555,24 +555,24 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
 
             <div className="space-y-3 text-xs">
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">节点名称 (支持带国旗，如 🇯🇵 日本专线 01)</label>
+                <label className="text-[#6e6e73] dark:text-slate-400 font-medium">节点名称 (支持带国旗，如 🇯🇵 日本专线 01)</label>
                 <input
                   type="text"
                   required
                   placeholder="🇭🇰 香港 IPLC 01"
                   value={newNodeName}
                   onChange={(e) => setNewNodeName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-slate-400 font-medium">协议类型</label>
+                  <label className="text-[#6e6e73] dark:text-slate-400 font-medium">协议类型</label>
                   <select
                     value={newNodeType}
                     onChange={(e) => setNewNodeType(e.target.value as any)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
+                    className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="vless">VLESS</option>
                     <option value="hysteria2">Hysteria 2</option>
@@ -584,63 +584,63 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-400 font-medium">端口 (Port)</label>
+                  <label className="text-[#6e6e73] dark:text-slate-400 font-medium">端口 (Port)</label>
                   <input
                     type="number"
                     required
                     value={newNodePort}
                     onChange={(e) => setNewNodePort(parseInt(e.target.value, 10) || 443)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:border-cyan-500 focus:outline-none"
+                    className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-slate-200 font-mono focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">服务器域名 / IP</label>
+                <label className="text-[#6e6e73] dark:text-slate-400 font-medium">服务器域名 / IP</label>
                 <input
                   type="text"
                   required
                   placeholder="hk01.example.com"
                   value={newNodeServer}
                   onChange={(e) => setNewNodeServer(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-slate-200 font-mono focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">密码 / UUID / Token</label>
+                <label className="text-[#6e6e73] dark:text-slate-400 font-medium">密码 / UUID / Token</label>
                 <input
                   type="text"
                   placeholder="UUID 或 认证密码"
                   value={newNodePassword}
                   onChange={(e) => setNewNodePassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-slate-200 font-mono focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">SNI / ServerName (可选)</label>
+                <label className="text-[#6e6e73] dark:text-slate-400 font-medium">SNI / ServerName (可选)</label>
                 <input
                   type="text"
                   placeholder="例如: gateway.cloudflare.com"
                   value={newNodeSni}
                   onChange={(e) => setNewNodeSni(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-slate-950 border border-black/[0.08] dark:border-slate-800 rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-slate-200 font-mono focus:border-indigo-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-black/[0.06] dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setShowAddNodeModal(false)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-medium border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
               >
                 取消
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
               >
                 保存节点
               </button>

@@ -11,6 +11,7 @@ import { CanvasWire } from './CanvasWire';
 import { CanvasMinimap } from './CanvasMinimap';
 import { StepSimulatorBar } from './StepSimulatorBar';
 import { CanvasPaletteDrawer } from './CanvasPaletteDrawer';
+import { useTheme } from '../../context/ThemeContext';
 import { 
   ZoomIn, 
   ZoomOut, 
@@ -42,6 +43,7 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   setRules,
   proxies,
 }) => {
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Viewport transformation: Pan and Zoom (adaptive to screen width)
@@ -117,7 +119,7 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       x: 60,
       y: 180,
       width: 250,
-      height: 160,
+      height: 150,
       step: 1,
       stepName: '流量捕获',
     };
@@ -132,9 +134,9 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         title: rule.comment || rule.payload,
         subtitle: `匹配: ${rule.payload}`,
         x: 440,
-        y: 40 + idx * 135,
+        y: 40 + idx * 145,
         width: 260,
-        height: 120,
+        height: 125,
         step: 2,
         stepName: '分流规则',
         ruleType: rule.type,
@@ -166,7 +168,7 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         x: 840,
         y: 40 + idx * 145,
         width: 260,
-        height: 130,
+        height: 125,
         step: 3,
         stepName: '策略调度',
         groupType: group.type,
@@ -184,9 +186,9 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         title: proxy.name,
         subtitle: `${proxy.server}:${proxy.port}`,
         x: 1240,
-        y: 40 + idx * 135,
+        y: 40 + idx * 145,
         width: 250,
-        height: 120,
+        height: 125,
         step: 4,
         stepName: '物理出口',
         nodeType: proxy.type,
@@ -204,9 +206,9 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       title: '🇨🇳 DIRECT 直连',
       subtitle: '国内流量直通 WAN 网关',
       x: 1240,
-      y: 40 + proxies.slice(0, 6).length * 135,
+      y: 40 + proxies.slice(0, 6).length * 145,
       width: 250,
-      height: 100,
+      height: 110,
       step: 4,
       stepName: '直连网关',
       nodeType: 'direct',
@@ -860,30 +862,37 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         onWheel={handleWheel}
         onDragOver={handleDragOverCanvas}
         onDrop={handleDropOnCanvas}
-        className="relative w-full h-[480px] sm:h-[580px] lg:h-[calc(100vh-270px)] min-h-[480px] max-h-[860px] bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden select-none cursor-default shadow-2xl touch-none"
+        style={{
+          backgroundImage:
+            resolvedTheme === 'dark'
+              ? 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)'
+              : 'radial-gradient(rgba(0, 0, 0, 0.12) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+        className="relative w-full h-[480px] sm:h-[580px] lg:h-[calc(100vh-270px)] min-h-[480px] max-h-[860px] bg-[#f2f3f7] dark:bg-[#090a10] rounded-3xl border border-black/[0.08] dark:border-white/[0.08] overflow-hidden select-none cursor-default shadow-2xl touch-none transition-colors"
       >
         {/* Floating Canvas Navigation Toolbar */}
-        <div className="absolute top-3 sm:top-4 right-2 sm:right-4 z-30 flex items-center gap-1 sm:gap-1.5 bg-slate-900/90 border border-slate-800 p-1 sm:p-1.5 rounded-xl shadow-xl backdrop-blur-md">
+        <div className="absolute top-3 sm:top-4 right-2 sm:right-4 z-30 flex items-center gap-1 sm:gap-1.5 apple-glass border border-black/[0.08] dark:border-white/[0.1] p-1 sm:p-1.5 rounded-2xl shadow-2xl">
           <button
             onClick={() => setZoom((z) => Math.min(2.0, Number((z + 0.15).toFixed(2))))}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className="p-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.09] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] apple-press transition-colors"
             title="放大画布 (Zoom In)"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={() => setZoom((z) => Math.max(0.32, Number((z - 0.15).toFixed(2))))}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className="p-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.09] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] apple-press transition-colors"
             title="缩小画布 (Zoom Out)"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={fitView}
-            className="flex items-center gap-1 p-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-xs font-semibold"
+            className="flex items-center gap-1 p-1.5 px-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.09] text-[#1d1d1f] dark:text-[#d4d4d8] hover:text-black dark:hover:text-white apple-press transition-colors text-xs font-semibold"
             title="自适应所有节点居中缩放"
           >
-            <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
+            <Maximize2 className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
             <span className="hidden sm:inline">自适应</span>
           </button>
           <button
@@ -891,18 +900,18 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
               setZoom(0.85);
               setPan({ x: 40, y: 30 });
             }}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors font-mono text-xs font-semibold px-2"
+            className="p-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.09] text-[#1d1d1f] dark:text-[#d4d4d8] hover:text-black dark:hover:text-white apple-press transition-colors font-mono text-xs font-semibold px-2"
             title="重置缩放比例为 85%"
           >
             {Math.round(zoom * 100)}%
           </button>
-          <div className="w-[1px] h-4 bg-slate-700 mx-0.5" />
+          <div className="w-[1px] h-4 bg-black/[0.08] dark:bg-white/[0.1] mx-0.5" />
           <button
             onClick={() => {
               autoLayoutNodes();
               setTimeout(fitView, 50);
             }}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
             title="一键根据 OpenClash 管道自动重排拓扑并居中"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -955,36 +964,35 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
           />
 
           {/* Pipeline Stage Column Headers & Flow Direction Indicators */}
-          <div className="absolute top-[-30px] left-0 flex gap-4 pointer-events-none text-xs font-bold font-mono select-none">
+          <div className="absolute top-[-36px] left-0 pointer-events-none text-xs font-bold font-mono select-none">
             {/* Step 1 Header */}
-            <div style={{ transform: 'translateX(60px)', width: '250px' }} className="text-sky-400 flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-sky-500/20 flex items-center justify-center text-[10px]">1</span>
-              <span>Step 1: 流量入口层</span>
+            <div style={{ position: 'absolute', left: '60px', width: '250px' }} className="text-sky-500 dark:text-sky-400 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-sky-500/15 dark:bg-sky-500/25 border border-sky-500/30 flex items-center justify-center text-[10px] font-bold">1</span>
+              <span className="font-semibold tracking-tight">Step 1: 流量入口层</span>
             </div>
 
             {/* Step 2 Header */}
-            <div style={{ transform: 'translateX(340px)', width: '260px' }} className="text-indigo-400 flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">2</span>
-              <span>Step 2: 规则匹配层</span>
+            <div style={{ position: 'absolute', left: '440px', width: '260px' }} className="text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-indigo-500/15 dark:bg-indigo-500/25 border border-indigo-500/30 flex items-center justify-center text-[10px] font-bold">2</span>
+              <span className="font-semibold tracking-tight">Step 2: 规则匹配层</span>
             </div>
 
             {/* Step 3 Header */}
-            <div style={{ transform: 'translateX(610px)', width: '260px' }} className="text-purple-400 flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-[10px]">3</span>
-              <span>Step 3: 策略调度层</span>
+            <div style={{ position: 'absolute', left: '840px', width: '260px' }} className="text-purple-600 dark:text-purple-400 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-purple-500/15 dark:bg-purple-500/25 border border-purple-500/30 flex items-center justify-center text-[10px] font-bold">3</span>
+              <span className="font-semibold tracking-tight">Step 3: 策略调度层</span>
             </div>
 
             {/* Step 4 Header */}
-            <div style={{ transform: 'translateX(880px)', width: '250px' }} className="text-emerald-400 flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px]">4</span>
-              <span>Step 4: 物理出口层</span>
+            <div style={{ position: 'absolute', left: '1240px', width: '250px' }} className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/25 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold">4</span>
+              <span className="font-semibold tracking-tight">Step 4: 物理出口层</span>
             </div>
           </div>
 
           {/* SVG Connection Layer */}
           <svg
-            style={{ width: '3200px', height: '2400px', transform: 'translate(-800px, -600px)' }}
-            className="absolute pointer-events-auto"
+            className="absolute top-0 left-0 w-[4000px] h-[3000px] overflow-visible pointer-events-none"
           >
             <defs>
               <linearGradient id="activeLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1016,10 +1024,10 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
             {connectingPort && (
               <path
                 d={`M ${connectingPort.startX} ${connectingPort.startY} C ${
-                  connectingPort.startX + 60
-                } ${connectingPort.startY}, ${connectingMousePos.x - 60} ${
-                  connectingMousePos.y
-                }, ${connectingMousePos.x} ${connectingMousePos.y}`}
+                  connectingPort.startX + (connectingPort.portType === 'out' ? 60 : -60)
+                } ${connectingPort.startY}, ${
+                  connectingMousePos.x - (connectingPort.portType === 'out' ? 60 : -60)
+                } ${connectingMousePos.y}, ${connectingMousePos.x} ${connectingMousePos.y}`}
                 fill="none"
                 stroke="#10b981"
                 strokeWidth={2.5}

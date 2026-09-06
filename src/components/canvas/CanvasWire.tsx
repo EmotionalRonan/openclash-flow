@@ -25,10 +25,10 @@ export const CanvasWire: React.FC<CanvasWireProps> = ({
   // fromNode right-middle handle: (fromNode.x + fromNode.width, fromNode.y + fromNode.height / 2)
   // toNode left-middle handle: (toNode.x, toNode.y + toNode.height / 2)
   const x1 = fromNode.x + fromNode.width;
-  const y1 = fromNode.y + (fromNode.height || 140) / 2;
+  const y1 = fromNode.y + (fromNode.height || 125) / 2;
 
   const x2 = toNode.x;
-  const y2 = toNode.y + (toNode.height || 140) / 2;
+  const y2 = toNode.y + (toNode.height || 125) / 2;
 
   // Control points for smooth horizontal cubic bezier
   const dx = Math.max(Math.abs(x2 - x1) * 0.5, 40);

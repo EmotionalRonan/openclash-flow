@@ -237,39 +237,39 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
     <div className="space-y-5">
       
       {/* Top Controls & View Toggle */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 backdrop-blur-sm">
+      <div className="apple-glass rounded-3xl p-4 sm:p-5 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-indigo-400" />
-            可视化拖拽分流工作台
-            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-normal">
+          <h2 className="text-base font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight flex items-center gap-2">
+            <Layers className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+            可视化分流工作台
+            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/[0.15] text-indigo-700 dark:text-indigo-300 font-medium border border-indigo-200 dark:border-indigo-500/25">
               实时自动同步至 OpenClash
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            直接将左侧的域名、IP 网段或预设规则卡片拖入右侧对应的策略组中，即刻生效生成配置文件
+          <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
+            将左侧域名、IP 网段或预设规则卡片拖入右侧策略组中，即刻生效生成配置文件
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5 self-stretch sm:self-end md:self-auto">
           {/* Custom rule button */}
           <button
             id="btn-add-custom-rule"
             onClick={() => setShowAddCustomModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>添加自定义规则</span>
           </button>
 
-          {/* View mode switcher */}
-          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          {/* View mode switcher - Apple Segmented Control */}
+          <div className="flex bg-slate-100 dark:bg-[#12131b] p-1 rounded-2xl border border-black/[0.08] dark:border-white/[0.08] text-xs">
             <button
               onClick={() => setActiveTab('canvas')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium apple-press transition-all ${
                 activeTab === 'canvas'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-white/[0.12] text-[#1d1d1f] dark:text-white shadow-sm border border-black/[0.06] dark:border-white/[0.1]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-[#f5f5f7]'
               }`}
             >
               <Workflow className="w-3.5 h-3.5" />
@@ -277,10 +277,10 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('board')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium apple-press transition-all ${
                 activeTab === 'board'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-white/[0.12] text-[#1d1d1f] dark:text-white shadow-sm border border-black/[0.06] dark:border-white/[0.1]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-[#f5f5f7]'
               }`}
             >
               <Kanban className="w-3.5 h-3.5" />
@@ -288,10 +288,10 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('priority')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium apple-press transition-all ${
                 activeTab === 'priority'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-white/[0.12] text-[#1d1d1f] dark:text-white shadow-sm border border-black/[0.06] dark:border-white/[0.1]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-[#f5f5f7]'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -318,27 +318,27 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
           
           {/* Left Column: Preset Target Palettes */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3 sticky top-20 shadow-xl">
+            <div className="apple-glass rounded-3xl p-4 sm:p-5 space-y-3.5 sticky top-20 shadow-xl border border-black/[0.08] dark:border-white/[0.08]">
               
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <Filter className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5 tracking-tight">
+                  <Filter className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
                   规则预设资源库
                 </span>
-                <span className="text-[11px] text-slate-400 font-mono">
+                <span className="text-[11px] text-[#6e6e73] dark:text-[#86868b] font-mono">
                   {filteredPresets.length} 项可选
                 </span>
               </div>
 
               {/* Search Bar */}
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <Search className="w-4 h-4 text-[#86868b] dark:text-[#71717a] absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="搜索域名/IP/应用 (如 openai, netflix, bilibili)..."
+                  placeholder="搜索域名/IP/应用 (如 openai, netflix)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-xs text-[#1d1d1f] dark:text-[#f5f5f7] placeholder:text-[#86868b] dark:placeholder:text-[#71717a] focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/20 focus:outline-none transition-all"
                 />
               </div>
 
@@ -357,10 +357,10 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-2.5 py-1 rounded-lg transition-colors ${
+                    className={`px-2.5 py-1 rounded-xl transition-all apple-press font-medium ${
                       selectedCategory === cat.id
-                        ? 'bg-indigo-600 text-white font-medium'
-                        : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800/80'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
                     }`}
                   >
                     {cat.label}
@@ -381,23 +381,23 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                       key={item.id}
                       draggable
                       onDragStart={(e) => handleDragStartPreset(e, item)}
-                      className={`p-2.5 rounded-xl border transition-all duration-200 cursor-grab active:cursor-grabbing group select-none ${
+                      className={`p-2.5 rounded-2xl border transition-all duration-150 cursor-grab active:cursor-grabbing group select-none ${
                         isAssigned
-                          ? 'bg-slate-950/40 border-slate-800/60 opacity-80'
-                          : 'bg-slate-950/90 border-slate-800 hover:border-indigo-500/50 hover:shadow-md hover:shadow-indigo-500/10'
+                          ? 'bg-black/[0.02] dark:bg-white/[0.02] border-black/[0.04] dark:border-white/[0.04] opacity-70'
+                          : 'bg-white/80 dark:bg-white/[0.03] border-black/[0.06] dark:border-white/[0.08] hover:border-indigo-400/50 hover:bg-slate-50 dark:hover:bg-white/[0.06] shadow-sm'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <GripVertical className="w-3.5 h-3.5 text-slate-600 group-hover:text-indigo-400 shrink-0" />
+                          <GripVertical className="w-3.5 h-3.5 text-[#86868b] group-hover:text-indigo-500 dark:text-[#71717a] dark:group-hover:text-indigo-400 shrink-0" />
                           <div>
-                            <div className="text-xs font-semibold text-slate-200 group-hover:text-white flex items-center gap-1.5">
+                            <div className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5 tracking-tight">
                               <span>{item.title}</span>
-                              <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-normal">
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] font-normal border border-black/[0.06] dark:border-white/[0.06]">
                                 {item.type}
                               </span>
                             </div>
-                            <div className="text-[11px] font-mono text-indigo-300 mt-0.5 truncate max-w-[200px]">
+                            <div className="text-[11px] font-mono text-indigo-600 dark:text-indigo-300 mt-0.5 truncate max-w-[200px]">
                               {item.payload}
                             </div>
                           </div>
@@ -406,13 +406,13 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                         {/* Quick Assign Dropdown */}
                         <div className="shrink-0 flex items-center gap-1">
                           {isAssigned ? (
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 truncate max-w-[120px]">
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/[0.15] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/25 truncate max-w-[120px]">
                               {assignedRule?.targetGroup}
                             </span>
                           ) : (
                             <button
                               onClick={() => handleQuickAssignPreset(item, item.defaultGroup)}
-                              className="text-[10px] px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white transition-colors"
+                              className="text-[10px] px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-indigo-600 text-[#1d1d1f] dark:text-[#d4d4d8] hover:text-white border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors font-medium"
                               title={`一键添加至 ${item.defaultGroup}`}
                             >
                               + 添加
@@ -422,7 +422,7 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                       </div>
 
                       {item.description && (
-                        <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
+                        <p className="text-[10px] text-[#6e6e73] dark:text-[#86868b] mt-1.5 pl-5">
                           {item.description}
                         </p>
                       )}
@@ -447,40 +447,40 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                     key={group.id}
                     onDragOver={(e) => handleDragOver(e, group.name)}
                     onDrop={(e) => handleDropOnGroup(e, group.name)}
-                    className={`rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ${
+                    className={`rounded-3xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ${
                       isDragTarget
-                        ? 'bg-indigo-950/40 border-indigo-400 ring-2 ring-indigo-500/50 shadow-xl shadow-indigo-500/20'
-                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                        ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-400 dark:border-indigo-400/80 ring-2 ring-indigo-500/30 shadow-2xl'
+                        : 'apple-glass border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.14] dark:hover:border-white/[0.14]'
                     }`}
                   >
                     {/* Card Header */}
-                    <div className="p-4 border-b border-slate-800/80 bg-slate-950/50 flex items-center justify-between">
+                    <div className="p-4 border-b border-black/[0.06] dark:border-white/[0.06] bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-white">{group.name}</h3>
-                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                          <h3 className="text-sm font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight">{group.name}</h3>
+                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] border border-black/[0.06] dark:border-white/[0.06]">
                             {group.type}
                           </span>
                         </div>
                         {group.description && (
-                          <p className="text-[11px] text-slate-400 mt-0.5">{group.description}</p>
+                          <p className="text-[11px] text-[#6e6e73] dark:text-[#86868b] mt-0.5">{group.description}</p>
                         )}
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/[0.15] text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/25">
                           {groupRules.length} 条
                         </span>
                       </div>
                     </div>
 
                     {/* Dropped Rules Container */}
-                    <div className="p-3 space-y-2 min-h-[160px] max-h-[280px] overflow-y-auto">
+                    <div className="p-3.5 space-y-2 min-h-[160px] max-h-[280px] overflow-y-auto">
                       {groupRules.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-800/80 rounded-xl text-slate-500">
-                          <Layers className="w-6 h-6 text-slate-600 mb-1.5 animate-pulse" />
+                        <div className="h-full flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-black/[0.08] dark:border-white/[0.08] rounded-2xl text-[#86868b] dark:text-[#71717a]">
+                          <Layers className="w-6 h-6 text-[#86868b] dark:text-[#71717a] mb-1.5 animate-pulse" />
                           <p className="text-xs font-medium">可将左侧规则拖拽至此策略组</p>
-                          <span className="text-[10px] text-slate-600 mt-0.5">支持域名、IP-CIDR、GeoIP</span>
+                          <span className="text-[10px] text-[#86868b] dark:text-[#71717a] mt-0.5">支持域名、IP-CIDR、GeoIP</span>
                         </div>
                       ) : (
                         groupRules.map((rule) => (
@@ -488,35 +488,35 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                             key={rule.id}
                             draggable
                             onDragStart={(e) => handleDragStartExisting(e, rule)}
-                            className="p-2 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-indigo-500/40 flex items-center justify-between gap-2 group text-xs transition-colors"
+                            className="p-2.5 rounded-xl bg-white/90 dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.06] hover:border-indigo-400/40 hover:bg-slate-50 dark:hover:bg-white/[0.06] flex items-center justify-between gap-2 group text-xs apple-press transition-all"
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <GripVertical className="w-3.5 h-3.5 text-slate-600 group-hover:text-indigo-400 shrink-0 cursor-grab" />
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 shrink-0">
+                              <GripVertical className="w-3.5 h-3.5 text-[#86868b] group-hover:text-indigo-500 dark:text-[#71717a] dark:group-hover:text-indigo-400 shrink-0 cursor-grab" />
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-white/[0.06] text-indigo-700 dark:text-indigo-300 shrink-0 border border-indigo-200 dark:border-white/[0.06]">
                                 {rule.type}
                               </span>
-                              <span className="font-mono text-slate-200 truncate" title={rule.payload}>
+                              <span className="font-mono text-[#1d1d1f] dark:text-[#d4d4d8] truncate" title={rule.payload}>
                                 {rule.type === 'MATCH' ? 'MATCH (默认全量)' : rule.payload}
                               </span>
                               {rule.comment && rule.comment !== rule.payload && (
-                                <span className="text-[10px] text-slate-500 truncate hidden sm:inline">
+                                <span className="text-[10px] text-[#6e6e73] dark:text-[#86868b] truncate hidden sm:inline">
                                   ({rule.comment})
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-1.5 shrink-0">
                               <button
                                 onClick={() => handleToggleRule(rule.id)}
                                 className={`w-2 h-2 rounded-full ${
-                                  rule.enabled ? 'bg-emerald-400' : 'bg-slate-600'
+                                  rule.enabled ? 'bg-emerald-500 ring-2 ring-emerald-500/30' : 'bg-slate-300 dark:bg-[#52525b]'
                                 }`}
                                 title={rule.enabled ? '已启用 (点击禁用)' : '已禁用 (点击启用)'}
                               />
                               {rule.type !== 'MATCH' && (
                                 <button
                                   onClick={() => handleDeleteRule(rule.id)}
-                                  className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                                  className="p-1 rounded-md text-[#86868b] hover:text-rose-500 dark:text-[#71717a] dark:hover:text-rose-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                                   title="从该策略组移除"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -529,7 +529,7 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                     </div>
 
                     {/* Card Footer Outbound summary */}
-                    <div className="px-4 py-2 bg-slate-950/80 border-t border-slate-800/60 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+                    <div className="px-4 py-2.5 bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/[0.06] dark:border-white/[0.06] text-[10px] text-[#6e6e73] dark:text-[#86868b] flex items-center justify-between font-mono">
                       <span>代理节点: {group.proxies.slice(0, 2).join(', ')}{group.proxies.length > 2 ? `... (+${group.proxies.length - 2})` : ''}</span>
                     </div>
 
@@ -545,47 +545,47 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
 
       {/* VIEW 2: PRIORITY ORDER TREE */}
       {activeTab === 'priority' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="apple-glass rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl border border-black/[0.08] dark:border-white/[0.08]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight flex items-center gap-2">
+                <Layers className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 OpenClash 规则匹配优先级顺序 (自上而下匹配)
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
                 Clash 核心引擎严格按照从上到下的顺序进行流量规则匹配，一旦命中立即执行对应策略组路由，后续规则不再检查。
               </p>
             </div>
-            <span className="text-xs font-mono px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            <span className="text-xs font-mono font-medium px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/[0.15] text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/25 self-start sm:self-auto shrink-0">
               共 {rules.length} 条已生效规则
             </span>
           </div>
 
-          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
             {rules.map((rule, idx) => (
               <div
                 key={rule.id}
-                className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs transition-colors ${
+                className={`p-3 rounded-2xl border flex items-center justify-between gap-3 text-xs transition-all apple-press ${
                   rule.enabled
-                    ? 'bg-slate-950/80 border-slate-800 hover:border-indigo-500/50'
-                    : 'bg-slate-950/30 border-slate-900 opacity-50'
+                    ? 'bg-white/80 dark:bg-white/[0.03] border-black/[0.06] dark:border-white/[0.08] hover:border-indigo-400/40 hover:bg-slate-50 dark:hover:bg-white/[0.05]'
+                    : 'bg-black/[0.02] dark:bg-white/[0.01] border-black/[0.04] dark:border-white/[0.04] opacity-50'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-6 text-center font-mono font-bold text-slate-500 text-[11px]">
+                  <span className="w-6 text-center font-mono font-semibold text-[#86868b] dark:text-[#71717a] text-[11px]">
                     #{idx + 1}
                   </span>
 
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-indigo-300 font-semibold shrink-0">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-white/[0.06] text-indigo-700 dark:text-indigo-300 font-medium shrink-0 border border-indigo-200 dark:border-white/[0.06]">
                     {rule.type}
                   </span>
 
-                  <span className="font-mono text-slate-200 font-medium truncate">
+                  <span className="font-mono text-[#1d1d1f] dark:text-[#f5f5f7] font-medium truncate">
                     {rule.type === 'MATCH' ? 'MATCH (全量兜底)' : rule.payload}
                   </span>
 
                   {rule.comment && (
-                    <span className="text-slate-400 text-[11px] truncate hidden md:inline">
+                    <span className="text-[#6e6e73] dark:text-[#86868b] text-[11px] truncate hidden md:inline">
                       • {rule.comment}
                     </span>
                   )}
@@ -593,8 +593,8 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="flex items-center gap-1.5">
-                    <MoveRight className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="font-semibold text-emerald-300 px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/30 text-[11px]">
+                    <MoveRight className="w-3.5 h-3.5 text-[#86868b] dark:text-[#71717a]" />
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/[0.15] border border-emerald-200 dark:border-emerald-500/25 text-[11px]">
                       {rule.targetGroup}
                     </span>
                   </div>
@@ -603,7 +603,7 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                     <button
                       disabled={idx === 0}
                       onClick={() => handleMoveRule(idx, 'up')}
-                      className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent"
+                      className="p-1.5 rounded-lg text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white hover:bg-black/[0.06] dark:hover:bg-white/[0.08] disabled:opacity-20 apple-press transition-colors"
                       title="上移优先级"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
@@ -611,17 +611,17 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                     <button
                       disabled={idx === rules.length - 1}
                       onClick={() => handleMoveRule(idx, 'down')}
-                      className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent"
+                      className="p-1.5 rounded-lg text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white hover:bg-black/[0.06] dark:hover:bg-white/[0.08] disabled:opacity-20 apple-press transition-colors"
                       title="下移优先级"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleToggleRule(rule.id)}
-                      className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-medium apple-press transition-all ${
                         rule.enabled
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-slate-800 text-slate-400'
+                          ? 'bg-emerald-50 dark:bg-emerald-500/[0.15] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/25'
+                          : 'bg-slate-100 dark:bg-white/[0.06] text-[#86868b] dark:text-[#71717a]'
                       }`}
                     >
                       {rule.enabled ? '启用' : '禁用'}
@@ -629,7 +629,8 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
                     {rule.type !== 'MATCH' && (
                       <button
                         onClick={() => handleDeleteRule(rule.id)}
-                        className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                        className="p-1.5 rounded-lg text-[#86868b] hover:text-rose-500 dark:text-[#71717a] dark:hover:text-rose-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] apple-press transition-colors"
+                        title="删除规则"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -644,32 +645,32 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
 
       {/* Add Custom Rule Modal */}
       {showAddCustomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <form
             onSubmit={handleAddCustomRule}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            className="apple-glass rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-4 border border-black/[0.1] dark:border-white/[0.12] animate-in zoom-in-95 duration-150"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-indigo-400" />
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+              <h3 className="text-base font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight flex items-center gap-2">
+                <Plus className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
                 添加自定义分流规则
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddCustomModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.06] hover:bg-black/[0.1] dark:hover:bg-white/[0.12] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white flex items-center justify-center text-xs apple-press transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">规则类型 (Rule Type)</label>
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">规则类型 (Rule Type)</label>
                 <select
                   value={customType}
                   onChange={(e) => setCustomType(e.target.value as RuleType)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3.5 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/20"
                 >
                   <option value="DOMAIN-SUFFIX">DOMAIN-SUFFIX (域名后缀匹配，如 openai.com)</option>
                   <option value="DOMAIN-KEYWORD">DOMAIN-KEYWORD (域名关键字匹配，如 google)</option>
@@ -682,23 +683,23 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">匹配值 (Payload)</label>
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">匹配值 (Payload)</label>
                 <input
                   type="text"
                   required
                   placeholder="例如: anthropic.com 或 10.0.0.0/8"
                   value={customPayload}
                   onChange={(e) => setCustomPayload(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3.5 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/20"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">目标策略组 (Target Group)</label>
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">目标策略组 (Target Group)</label>
                 <select
                   value={customTargetGroup}
                   onChange={(e) => setCustomTargetGroup(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3.5 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/20"
                 >
                   {policyGroups.map((g) => (
                     <option key={g.id} value={g.name}>
@@ -711,28 +712,28 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-medium">规则备注 (Comment)</label>
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">规则备注 (Comment)</label>
                 <input
                   type="text"
                   placeholder="例如: Claude 官方 API 专用"
                   value={customComment}
                   onChange={(e) => setCustomComment(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3.5 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/20"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-black/[0.06] dark:border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => setShowAddCustomModal(false)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-medium border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
               >
                 取消
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
               >
                 确认添加
               </button>
