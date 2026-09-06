@@ -136,10 +136,23 @@ cat << 'EOF' > "${TARGET_LUCI_JS_VIEW}/index.js"
 
 return view.extend({
     render: function() {
+        var pageUrl = L.resource('openclash-flow/index.html');
         return E('div', { 'class': 'cbi-map', 'id': 'cbi-openclash-flow', 'style': 'padding: 0; margin: 0;' }, [
+            E('div', { 'style': 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 2px;' }, [
+                E('div', { 'style': 'display: flex; align-items: center; gap: 8px;' }, [
+                    E('span', { 'style': 'font-weight: 700; font-size: 15px; color: #f8fafc;' }, [ _('OpenClash Flow 智能拓扑编排') ]),
+                    E('span', { 'class': 'badge', 'style': 'font-size: 11px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;' }, [ 'v1.0.0' ])
+                ]),
+                E('a', {
+                    'href': pageUrl,
+                    'target': '_blank',
+                    'class': 'btn cbi-button cbi-button-action',
+                    'style': 'font-size: 12px; padding: 4px 12px; border-radius: 6px; text-decoration: none;'
+                }, [ '↗ ' + _('独立全屏打开') ])
+            ]),
             E('iframe', {
-                'src': '/luci-static/resources/openclash-flow/index.html',
-                'style': 'width: 100%; height: calc(100vh - 120px); min-height: 800px; border: 1px solid #1e293b; border-radius: 12px; background: #020617; display: block; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);',
+                'src': pageUrl,
+                'style': 'width: 100%; height: calc(100vh - 150px); min-height: 800px; border: 1px solid #1e293b; border-radius: 12px; background: #020617; display: block; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);',
                 'title': 'OpenClash Flow Canvas'
             })
         ]);
@@ -156,8 +169,17 @@ mkdir -p "${TARGET_VIEW}"
 cat << 'EOF' > "${TARGET_VIEW}/index.htm"
 <%+header%>
 <div class="cbi-map" id="cbi-openclash-flow">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 2px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 700; font-size: 15px;">OpenClash Flow 智能拓扑编排</span>
+            <span style="font-size: 11px; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;">v1.0.0</span>
+        </div>
+        <a href="<%=resource%>/openclash-flow/index.html" target="_blank" class="cbi-button cbi-button-action" style="font-size: 12px; padding: 4px 12px; border-radius: 6px; text-decoration: none;">
+            ↗ 独立全屏打开
+        </a>
+    </div>
     <div style="width:100%; height:calc(100vh - 150px); min-height:800px; border-radius:12px; overflow:hidden; border:1px solid #1e293b; background:#020617; position:relative;">
-        <iframe src="/luci-static/resources/openclash-flow/index.html" style="width:100%; height:100%; border:none; display:block;" title="OpenClash Flow Canvas"></iframe>
+        <iframe src="<%=resource%>/openclash-flow/index.html" style="width:100%; height:100%; border:none; display:block;" title="OpenClash Flow Canvas"></iframe>
     </div>
 </div>
 <%+footer%>
@@ -288,6 +310,7 @@ echo ""
 echo "🔒 [4/4] 计算生成 SHA256 校验和清单..."
 cd "${OUT_DIR}"
 sha256sum *.ipk > "${OUT_DIR}/sha256sums.txt"
+cp -f "${OUT_DIR}"/*.ipk "${OUT_DIR}/sha256sums.txt" "${PUBLIC_DIR}/" 2>/dev/null || true
 
 echo ""
 echo "============================================================"

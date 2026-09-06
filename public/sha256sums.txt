@@ -1,0 +1,6 @@
+bfcbc7c89aa34aaf62804e587362d45cff6641267766ac0338987359cac6d486  luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk
+25488597817d83e5e0e697cab631838e733037e6d4f5f7321caa98ade5e01761  luci-app-openclash-flow_1.0.0-1_all.ipk
+28d577ecedb1f733a93de4fec9538a13df2c3d0fde14689b0f61e4f6dd582446  luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk
+d90ac4ca058f1dfe5ccf4f2ede069f40c9c10f3c134c6b3c6757e9765c548cfc  luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk
+0e039b2bd4f095ca159454c66106ad535e50c197347a20921d1b60025927970d  luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk
+45157fe5ca9628e1e9b7eeaf46a99e12b78f93b21b8699718d82ea009101a0d3  luci-app-openclash-flow_1.0.0-1_x86_64.ipk
