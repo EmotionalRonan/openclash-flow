@@ -2,7 +2,7 @@
 set -e
 
 PKG_NAME="luci-app-openclash-flow"
-PKG_VERSION="1.0.0-1"
+PKG_VERSION="1.0.1-1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_ROOT="${WORK_DIR}/build-ipk"
@@ -139,21 +139,36 @@ cat << 'EOF' > "${TARGET_LUCI_JS_VIEW}/index.js"
 
 return view.extend({
     render: function() {
-        var pageUrl = L.resource('openclash-flow/index.html');
+        // 自动注入动态时间戳参数，强制浏览器向路由器拉取最新资源，彻底杜绝 IPK 升级后旧版缓存问题
+        var cacheBust = new Date().getTime();
+        var pageUrl = L.resource('openclash-flow/index.html') + '?_t=' + cacheBust;
         return E('div', { 'class': 'cbi-map', 'id': 'cbi-openclash-flow', 'style': 'padding: 0; margin: 0;' }, [
             E('div', { 'style': 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 2px;' }, [
                 E('div', { 'style': 'display: flex; align-items: center; gap: 8px;' }, [
                     E('span', { 'style': 'font-weight: 700; font-size: 15px; color: #f8fafc;' }, [ _('OpenClash Flow 智能拓扑编排') ]),
-                    E('span', { 'class': 'badge', 'style': 'font-size: 11px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;' }, [ 'v1.0.0' ])
+                    E('span', { 'class': 'badge', 'style': 'font-size: 11px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;' }, [ 'v1.0.1' ])
                 ]),
-                E('a', {
-                    'href': pageUrl,
-                    'target': '_blank',
-                    'class': 'btn cbi-button cbi-button-action',
-                    'style': 'font-size: 12px; padding: 4px 12px; border-radius: 6px; text-decoration: none;'
-                }, [ '↗ ' + _('独立全屏打开') ])
+                E('div', { 'style': 'display: flex; align-items: center; gap: 8px;' }, [
+                    E('button', {
+                        'class': 'btn cbi-button',
+                        'style': 'font-size: 12px; padding: 4px 10px; border-radius: 6px;',
+                        'click': function() {
+                            var iframe = document.getElementById('openclash-flow-frame');
+                            if (iframe) {
+                                iframe.src = L.resource('openclash-flow/index.html') + '?_t=' + new Date().getTime();
+                            }
+                        }
+                    }, [ '↻ ' + _('强制重载最新界面') ]),
+                    E('a', {
+                        'href': pageUrl,
+                        'target': '_blank',
+                        'class': 'btn cbi-button cbi-button-action',
+                        'style': 'font-size: 12px; padding: 4px 12px; border-radius: 6px; text-decoration: none;'
+                    }, [ '↗ ' + _('独立全屏打开') ])
+                ])
             ]),
             E('iframe', {
+                'id': 'openclash-flow-frame',
                 'src': pageUrl,
                 'style': 'width: 100%; height: calc(100vh - 120px); min-height: 540px; border: 1px solid #1e293b; border-radius: 12px; background: #020617; display: block; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);',
                 'title': 'OpenClash Flow Canvas'
@@ -175,14 +190,19 @@ cat << 'EOF' > "${TARGET_VIEW}/index.htm"
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 2px;">
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-weight: 700; font-size: 15px;">OpenClash Flow 智能拓扑编排</span>
-            <span style="font-size: 11px; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;">v1.0.0</span>
+            <span style="font-size: 11px; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); padding: 2px 8px; border-radius: 9999px;">v1.0.1</span>
         </div>
-        <a href="<%=resource%>/openclash-flow/index.html" target="_blank" class="cbi-button cbi-button-action" style="font-size: 12px; padding: 4px 12px; border-radius: 6px; text-decoration: none;">
-            ↗ 独立全屏打开
-        </a>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button onclick="document.getElementById('openclash-flow-frame').src='<%=resource%>/openclash-flow/index.html?v='+Date.now()" class="cbi-button" style="font-size: 12px; padding: 4px 10px; border-radius: 6px;">
+                ↻ 强制重载最新界面
+            </button>
+            <a href="<%=resource%>/openclash-flow/index.html?v=<%=os.time()%>" target="_blank" class="cbi-button cbi-button-action" style="font-size: 12px; padding: 4px 12px; border-radius: 6px; text-decoration: none;">
+                ↗ 独立全屏打开
+            </a>
+        </div>
     </div>
     <div style="width:100%; height:calc(100vh - 120px); min-height:540px; border-radius:12px; overflow:hidden; border:1px solid #1e293b; background:#020617; position:relative;">
-        <iframe src="<%=resource%>/openclash-flow/index.html" style="width:100%; height:100%; border:none; display:block;" title="OpenClash Flow Canvas"></iframe>
+        <iframe id="openclash-flow-frame" src="<%=resource%>/openclash-flow/index.html?v=<%=os.time()%>" style="width:100%; height:100%; border:none; display:block;" title="OpenClash Flow Canvas"></iframe>
     </div>
 </div>
 <%+footer%>
@@ -267,19 +287,28 @@ Title: OpenClash Flow Visual Rule & Infinite Canvas Orchestrator (${ARCH})
 Description: Visual infinite canvas rule orchestrator, step-by-step traffic simulator, and multi-protocol subscription parser for OpenClash on ImmortalWRT / OpenWrt (${ARCH_DESC[$ARCH]}).
 EOF
 
-  # B. postinst 脚本
+  # B. postinst 脚本 (强化缓存清理与 Web 守护进程即时热重载)
   cat << 'EOF' > "${ARCH_PKG_DIR}/CONTROL/postinst"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
     ln -sf /www/luci-static/resources/openclash-flow/assets /www/assets 2>/dev/null || true
-    rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
-    rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
+    
+    # 彻底清理所有 LuCI 视图及路由缓存、ucode 预编译缓存
+    rm -f /tmp/luci-indexcache /var/run/luci-indexcache /tmp/luci-reloadcache 2>/dev/null || true
+    rm -rf /tmp/luci-modulecache/ /tmp/luci-sessions/ 2>/dev/null || true
+    
+    # 写入版本标记时间戳
+    echo "$(date +%s)" > /etc/openclash-flow.version 2>/dev/null || true
+
+    # 强制重启 RPC 守护进程与 Web 服务器 (uhttpd / nginx)，立即使新静态文件生效
     /etc/init.d/rpcd restart 2>/dev/null || true
     /etc/init.d/uhttpd restart 2>/dev/null || true
+    /etc/init.d/nginx restart 2>/dev/null || true
+
     echo "=================================================="
-    echo " OpenClash Flow 拓扑编排插件已成功安装！"
-    echo " 请在 LuCI Web 管理界面 -> 服务 (Services) -> OpenClash 拓扑编排 访问。"
-    echo " (若未立即出现，请按 Ctrl+F5 强制刷新网页或重新登录)"
+    echo " OpenClash Flow 拓扑编排插件已成功安装/升级！"
+    echo " [自动加载最新界面]：已自动清空 LuCI 缓存并重启 Web 服务。"
+    echo " 提示：若浏览器仍显示旧版，请按 Ctrl+F5 (Mac: Cmd+Shift+R) 强制刷新。"
     echo "=================================================="
     exit 0
 }

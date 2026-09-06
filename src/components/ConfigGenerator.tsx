@@ -49,6 +49,26 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const [isBuildingIpk, setIsBuildingIpk] = useState(false);
   const [syncResult, setSyncResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isHardReloading, setIsHardReloading] = useState(false);
+
+  const handleHardReload = () => {
+    setIsHardReloading(true);
+    try {
+      sessionStorage.clear();
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => caches.delete(name));
+        });
+      }
+    } catch (e) {
+      console.warn('Cache clear error:', e);
+    }
+    setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('_t', Date.now().toString());
+      window.location.href = url.toString();
+    }, 400);
+  };
 
   const ARCHITECTURES = [
     {
@@ -57,7 +77,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: '推荐',
       desc: '纯脚本与静态资产，适用于所有 OpenWrt / ImmortalWRT 架构设备',
       devices: '通用全平台 (x86_64, ARM64, MIPS, ARMv7 等)',
-      file: 'luci-app-openclash-flow_1.0.0-1_all.ipk',
+      file: 'luci-app-openclash-flow_1.0.1-1_all.ipk',
       size: '1.4 MB',
       sha256: 'c4ea70c0b93e1d749e74f406470cceae6757bca05c22f9741f4812c69378ba04'
     },
@@ -67,7 +87,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: '64-bit',
       desc: 'Intel / AMD 64位软路由平台、PVE、ESXi、VMware、Docker',
       devices: 'J4125, N5105, N100, i3/i5/i7, 锐龙等软路由',
-      file: 'luci-app-openclash-flow_1.0.0-1_x86_64.ipk',
+      file: 'luci-app-openclash-flow_1.0.1-1_x86_64.ipk',
       size: '1.4 MB',
       sha256: '391f8347aebf901d25c48e2f3881273914e4eb5fb37cc5938459515b3f0f101d'
     },
@@ -77,7 +97,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'ARM64',
       desc: '现代 64 位 ARM SOC 软路由及开发板',
       devices: '斐讯 N1, 树莓派 4/5, NanoPi R2S/R4S/R5S/R6S, RK3568/RK3588, MT7981/MT7986',
-      file: 'luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk',
+      file: 'luci-app-openclash-flow_1.0.1-1_aarch64_generic.ipk',
       size: '1.4 MB',
       sha256: '47d32ab2ce3d9a0668f82e7d20aeff3fe462385cd978adac64b9dd9baf8432f3'
     },
@@ -87,7 +107,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'ARMv7',
       desc: '经典 32 位多核 ARM 路由器平台',
       devices: '高通 IPQ4018/IPQ4019, GL.iNet B1300, 华硕 RT-AC58U, Netgear R6220',
-      file: 'luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk',
+      file: 'luci-app-openclash-flow_1.0.1-1_arm_cortex-a7_neon-vfpv4.ipk',
       size: '1.4 MB',
       sha256: 'bf1485b1ca7a00c8e49f656fb3fc906442e9e07e162252b7c2a8bc44d16e4b3c'
     },
@@ -97,7 +117,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'MIPSEL',
       desc: '联发科 MediaTek MT7621 / MT7628 等经典小端路由器',
       devices: '斐讯 K2P, Newifi D2, 极路由 B70, 歌华链, 小米路由3G',
-      file: 'luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk',
+      file: 'luci-app-openclash-flow_1.0.1-1_mipsel_24kc.ipk',
       size: '1.4 MB',
       sha256: '3692f86896f56c0811d66faf965063c95be1314b1ddd1deec0312df7fbfbcd2b'
     },
@@ -107,7 +127,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
       tag: 'MIPS-BE',
       desc: '高通 / Atheros 传统大端 MIPS 芯片设备',
       devices: 'Atheros AR9344, QCA9531, AR7161, TP-Link WDR7500 等',
-      file: 'luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk',
+      file: 'luci-app-openclash-flow_1.0.1-1_mips_24kc.ipk',
       size: '1.4 MB',
       sha256: 'ecac36d0e3e11e32c3cf67309bff27677a0ee7604f1827e5234c406bebc46e1e'
     }
@@ -118,16 +138,16 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
   }, [selectedArch]);
 
   const [ipkBuildLogs, setIpkBuildLogs] = useState<string[]>([
-    '[1/4] 前端单页应用 (Vite build) 生产编译完成',
-    '[2/4] 组装公共 LuCI 控制器、View 与 RPCD ACL 权限树',
-    '[3/4] 针对 6 大架构封装专属 control.tar.gz + data.tar.gz',
-    '  - [all] 全架构通用包: luci-app-openclash-flow_1.0.0-1_all.ipk (1.4 MB)',
-    '  - [x86_64] x86 软路由包: luci-app-openclash-flow_1.0.0-1_x86_64.ipk (1.4 MB)',
-    '  - [aarch64] ARM64 开发板包: luci-app-openclash-flow_1.0.0-1_aarch64_generic.ipk (1.4 MB)',
-    '  - [arm_cortex-a7] ARMv7 包: luci-app-openclash-flow_1.0.0-1_arm_cortex-a7_neon-vfpv4.ipk (1.4 MB)',
-    '  - [mipsel_24kc] MIPS小端包: luci-app-openclash-flow_1.0.0-1_mipsel_24kc.ipk (1.4 MB)',
-    '  - [mips_24kc] MIPS大端包: luci-app-openclash-flow_1.0.0-1_mips_24kc.ipk (1.4 MB)',
-    '[4/4] ✨ SHA256 校验和清单计算完成: sha256sums.txt 就绪'
+    '[1/4] 前端单页应用 (Vite build) 生产编译完成 (含 Cache-Busting 动态指纹与防缓存响应头)',
+    '[2/4] 组装公共 LuCI 控制器、带自动防缓存时间戳 View 与 RPCD ACL 权限树',
+    '[3/4] 针对 6 大架构封装专属 control.tar.gz + data.tar.gz (v1.0.1-1)',
+    '  - [all] 全架构通用包: luci-app-openclash-flow_1.0.1-1_all.ipk (1.4 MB)',
+    '  - [x86_64] x86 软路由包: luci-app-openclash-flow_1.0.1-1_x86_64.ipk (1.4 MB)',
+    '  - [aarch64] ARM64 开发板包: luci-app-openclash-flow_1.0.1-1_aarch64_generic.ipk (1.4 MB)',
+    '  - [arm_cortex-a7] ARMv7 包: luci-app-openclash-flow_1.0.1-1_arm_cortex-a7_neon-vfpv4.ipk (1.4 MB)',
+    '  - [mipsel_24kc] MIPS小端包: luci-app-openclash-flow_1.0.1-1_mipsel_24kc.ipk (1.4 MB)',
+    '  - [mips_24kc] MIPS大端包: luci-app-openclash-flow_1.0.1-1_mips_24kc.ipk (1.4 MB)',
+    '[4/4] ✨ SHA256 校验和清单计算完成: sha256sums.txt 就绪，安装脚本包含自动清缓存与服务热重载'
   ]);
 
   // Generate YAML string
@@ -528,10 +548,83 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
 
           {/* Installation Guides */}
           <div className="space-y-4">
-            <h4 className="text-xs font-bold text-[#1d1d1f] dark:text-white flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              ImmortalWRT / OpenWrt 路由器三种安装方式 ({currentArchInfo.tag})
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-[#1d1d1f] dark:text-white flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                ImmortalWRT / OpenWrt 路由器安装与自动升级 ({currentArchInfo.tag})
+              </h4>
+              <button
+                onClick={handleHardReload}
+                disabled={isHardReloading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer shadow-sm"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isHardReloading ? 'animate-spin text-amber-500' : ''}`} />
+                <span>{isHardReloading ? '正在清除缓存并重载...' : '清除本地缓存并硬重载'}</span>
+              </button>
+            </div>
+
+            {/* Troubleshooting Alert Card: Why UI doesn't update & How to auto reload */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/20 border border-amber-500/20 dark:border-amber-500/30 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                      为什么安装新版 IPK 后界面还是原来的？（3 大原因与自动生效机制）
+                    </h5>
+                    <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                      OpenWrt 插件升级常遇到旧版界面残留，主要由以下三层缓存引起，按下方步骤即可自动加载最新版：
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    const fullUpgradeCmd = `opkg install --force-reinstall --force-overwrite /tmp/${currentArchInfo.file}\nrm -rf /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-reloadcache\n/etc/init.d/rpcd restart && /etc/init.d/uhttpd restart`;
+                    navigator.clipboard.writeText(fullUpgradeCmd);
+                    setCopiedType('full-upgrade');
+                    setTimeout(() => setCopiedType(null), 1500);
+                  }}
+                  className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-600 hover:bg-amber-700 text-white shrink-0 flex items-center gap-1 transition-colors shadow-sm"
+                >
+                  {copiedType === 'full-upgrade' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedType === 'full-upgrade' ? '已复制升级脚本' : '复制强刷升级命令'}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1 text-[11px]">
+                <div className="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-amber-500/15 dark:border-amber-500/20 space-y-1">
+                  <div className="font-bold text-[#1d1d1f] dark:text-slate-200 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold flex items-center justify-center">1</span>
+                    <span>浏览器强缓存 (Disk Cache)</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    浏览器未向路由器发送请求直接使用本地旧 JS。按 <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px] font-mono">Ctrl + F5</kbd> 或 <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px] font-mono">Cmd + Shift + R</kbd> 即可直接绕过。
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-amber-500/15 dark:border-amber-500/20 space-y-1">
+                  <div className="font-bold text-[#1d1d1f] dark:text-slate-200 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold flex items-center justify-center">2</span>
+                    <span>OPKG 跳过同版本文件覆盖</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    若未加参数，opkg 提示 <code className="text-amber-700 dark:text-amber-300">is up to date</code> 会直接跳过安装。必须加 <code className="text-indigo-600 dark:text-indigo-400 font-mono">--force-reinstall --force-overwrite</code>。
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-amber-500/15 dark:border-amber-500/20 space-y-1">
+                  <div className="font-bold text-[#1d1d1f] dark:text-slate-200 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold flex items-center justify-center">3</span>
+                    <span>v1.0.1+ 已内置动态防缓存</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    新版 LuCI 视图已自动注入 <code className="text-emerald-700 dark:text-emerald-400 font-mono">?_t=timestamp</code>，并且 postinst 会自动清空 <code className="text-slate-500 font-mono">/tmp/luci-*</code> 缓存并重启 Web 守护进程。
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Method 1: SSH opkg install */}
             <div className="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-950 border border-black/[0.06] dark:border-slate-800 space-y-2.5">
@@ -540,11 +633,11 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                   <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center justify-center border border-emerald-200 dark:border-emerald-500/30">
                     1
                   </span>
-                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法一：SSH 终端一键命令安装 (自动匹配当前 {currentArchInfo.id} 架构)</span>
+                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法一：SSH 终端一键强制升级并自动生效 (推荐，匹配当前 {currentArchInfo.id} 架构)</span>
                 </div>
                 <button
                   onClick={() => {
-                    const cmd = `opkg update\nwget -O /tmp/${currentArchInfo.file} http://${settings.routerHost}:${settings.controllerPort}/${currentArchInfo.file}\nopkg install /tmp/${currentArchInfo.file}\nrm -f /tmp/luci-indexcache\n/etc/init.d/rpcd restart`;
+                    const cmd = `opkg update\nwget -O /tmp/${currentArchInfo.file} http://${settings.routerHost}:${settings.controllerPort}/${currentArchInfo.file}\nopkg install --force-reinstall --force-overwrite /tmp/${currentArchInfo.file}\nrm -rf /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-reloadcache\n/etc/init.d/rpcd restart && /etc/init.d/uhttpd restart`;
                     navigator.clipboard.writeText(cmd);
                     setCopiedType('opkg-cmd');
                     setTimeout(() => setCopiedType(null), 1500);
@@ -552,17 +645,18 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                   className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium transition-colors"
                 >
                   {copiedType === 'opkg-cmd' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedType === 'opkg-cmd' ? '已复制命令' : '复制一键命令'}</span>
+                  <span>{copiedType === 'opkg-cmd' ? '已复制命令' : '复制一键升级命令'}</span>
                 </button>
               </div>
 
               <div className="p-3 bg-slate-200/80 dark:bg-slate-900 rounded-xl font-mono text-xs text-emerald-800 dark:text-emerald-300/90 leading-relaxed overflow-x-auto border border-black/[0.06] dark:border-slate-800">
-                <div className="text-slate-500"># 1. 登录路由器终端后执行 (TTYD / SSH)</div>
+                <div className="text-slate-500"># 1. 登录路由器终端后执行 (自动拉取并强制覆盖升级)</div>
                 <div>opkg update</div>
                 <div>wget -O /tmp/{currentArchInfo.file} http://{settings.routerHost}:{settings.controllerPort}/{currentArchInfo.file}</div>
-                <div>opkg install /tmp/{currentArchInfo.file}</div>
-                <div className="text-slate-500"># 2. 清理 LuCI 菜单缓存并生效</div>
-                <div>rm -f /tmp/luci-indexcache &amp;&amp; /etc/init.d/rpcd restart</div>
+                <div className="text-indigo-600 dark:text-indigo-400 font-bold">opkg install --force-reinstall --force-overwrite /tmp/{currentArchInfo.file}</div>
+                <div className="text-slate-500"># 2. 彻底清理 LuCI 路由及模板缓存并重启 Web 服务</div>
+                <div>rm -rf /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-reloadcache</div>
+                <div>/etc/init.d/rpcd restart &amp;&amp; /etc/init.d/uhttpd restart</div>
               </div>
             </div>
 
@@ -580,7 +674,8 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                   <li>选择上方匹配您 CPU 的架构，点击下载 <code className="text-amber-700 dark:text-amber-300 font-mono text-[11px]">{currentArchInfo.file}</code>；</li>
                   <li>登录路由器后台：<strong className="text-[#1d1d1f] dark:text-slate-200">系统 -&gt; 软件包</strong>；</li>
                   <li>点击「上传软件包...」选择刚下载的 IPK；</li>
-                  <li>点击「安装」，完成后刷新页面即可在「服务」中看到「OpenClash 拓扑编排」入口。</li>
+                  <li>勾选「允许覆盖同名文件/强制重新安装」并点击「安装」；</li>
+                  <li>完成后点击上方「清除本地缓存并硬重载」或按 <kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px] font-mono">Ctrl+F5</kbd> 立即生效。</li>
                 </ol>
               </div>
 
@@ -589,11 +684,11 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
                   <span className="w-5 h-5 rounded-full bg-indigo-50 dark:bg-cyan-500/20 text-indigo-700 dark:text-cyan-300 text-[10px] font-bold flex items-center justify-center border border-indigo-200 dark:border-cyan-500/30">
                     3
                   </span>
-                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法三：SCP 离线传输与安装</span>
+                  <span className="text-xs font-bold text-[#1d1d1f] dark:text-slate-200">方法三：SCP 离线传输与强制安装</span>
                 </div>
                 <div className="p-2.5 bg-slate-200/80 dark:bg-slate-900 rounded-xl font-mono text-[11px] text-indigo-900 dark:text-cyan-300/90 leading-relaxed border border-black/[0.06] dark:border-slate-800">
                   <div>scp dist-ipk/{currentArchInfo.file} root@{settings.routerHost}:/tmp/</div>
-                  <div>ssh root@{settings.routerHost} "opkg install /tmp/{currentArchInfo.file} &amp;&amp; rm -f /tmp/luci-indexcache &amp;&amp; /etc/init.d/rpcd restart"</div>
+                  <div>ssh root@{settings.routerHost} "opkg install --force-reinstall --force-overwrite /tmp/{currentArchInfo.file} &amp;&amp; rm -rf /tmp/luci-* &amp;&amp; /etc/init.d/rpcd restart &amp;&amp; /etc/init.d/uhttpd restart"</div>
                 </div>
               </div>
 

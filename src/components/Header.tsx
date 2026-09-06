@@ -15,7 +15,8 @@ import {
   Check,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  RefreshCw
 } from 'lucide-react';
 import { OpenClashSettings } from '../types/openclash';
 import { useTheme } from '../context/ThemeContext';
@@ -175,6 +176,31 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               ))}
             </div>
+
+            {/* Force Reload / Cache Busting button */}
+            <button
+              id="btn-force-reload"
+              onClick={() => {
+                try {
+                  sessionStorage.clear();
+                  if ('caches' in window) {
+                    caches.keys().then((names) => {
+                      names.forEach((name) => caches.delete(name));
+                    });
+                  }
+                } catch (e) {
+                  console.warn(e);
+                }
+                const url = new URL(window.location.href);
+                url.searchParams.set('_t', Date.now().toString());
+                window.location.href = url.toString();
+              }}
+              className="p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0"
+              title="清除本地缓存并强制刷新最新界面 (Ctrl+F5)"
+              aria-label="强制刷新最新界面"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
 
             {/* Settings button */}
             <button
