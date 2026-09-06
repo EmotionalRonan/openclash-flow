@@ -14,11 +14,31 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
     'mips_24kc',
   ];
 
+  // Dynamically resolve package version from package-openwrt/Makefile or scripts/build-ipk.sh
+  const getPackageVersion = (): string => {
+    try {
+      const makefilePath = path.resolve(process.cwd(), 'package-openwrt', 'Makefile');
+      if (fs.existsSync(makefilePath)) {
+        const content = fs.readFileSync(makefilePath, 'utf-8');
+        const verMatch = content.match(/PKG_VERSION:=([^\s]+)/);
+        const relMatch = content.match(/PKG_RELEASE:=([^\s]+)/);
+        if (verMatch && relMatch) {
+          return `${verMatch[1]}-${relMatch[1]}`;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return '1.0.1-1';
+  };
+
+  const version = getPackageVersion();
+
   beforeAll(() => {
     // If dist-ipk does not exist or is missing any IPKs, build them on the fly
     const allExist =
       fs.existsSync(distDir) &&
-      expectedArchs.every((arch) => fs.existsSync(path.join(distDir, `luci-app-openclash-flow_1.0.0-1_${arch}.ipk`))) &&
+      expectedArchs.every((arch) => fs.existsSync(path.join(distDir, `luci-app-openclash-flow_${version}_${arch}.ipk`))) &&
       fs.existsSync(path.join(distDir, 'sha256sums.txt'));
 
     if (!allExist) {
@@ -31,7 +51,7 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
   });
 
   expectedArchs.forEach((arch) => {
-    const ipkName = `luci-app-openclash-flow_1.0.0-1_${arch}.ipk`;
+    const ipkName = `luci-app-openclash-flow_${version}_${arch}.ipk`;
     it(`架构 [${arch}] 的 IPK 文件 (${ipkName}) 应存在且大小正常 (> 100KB)`, () => {
       const ipkPath = path.join(distDir, ipkName);
       expect(fs.existsSync(ipkPath)).toBe(true);
@@ -48,7 +68,7 @@ describe('4. 多架构 IPK 软件包与构建产物校验 (IPK Artifacts & Check
     const content = fs.readFileSync(sumFile, 'utf-8');
 
     expectedArchs.forEach((arch) => {
-      expect(content).toContain(`luci-app-openclash-flow_1.0.0-1_${arch}.ipk`);
+      expect(content).toContain(`luci-app-openclash-flow_${version}_${arch}.ipk`);
     });
   });
 });
