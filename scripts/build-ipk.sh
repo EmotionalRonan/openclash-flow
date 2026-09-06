@@ -3,7 +3,8 @@ set -e
 
 PKG_NAME="luci-app-openclash-flow"
 PKG_VERSION="1.0.0-1"
-WORK_DIR=$(pwd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_ROOT="${WORK_DIR}/build-ipk"
 OUT_DIR="${WORK_DIR}/dist-ipk"
 PUBLIC_DIR="${WORK_DIR}/public"
@@ -77,8 +78,7 @@ module("luci.controller.openclash_flow", package.seeall)
 
 function index()
     local page = entry({"admin", "services", "openclash_flow"}, template("openclash_flow/index"), _("OpenClash 拓扑编排"), 65)
-    page.dependent = true
-    page.acl_depends = { "luci-app-openclash-flow" }
+    page.dependent = false
 
     entry({"admin", "services", "openclash_flow", "api_sync"}, call("action_sync_config")).leaf = true
     entry({"admin", "services", "openclash_flow", "api_status"}, call("action_status")).leaf = true
@@ -169,19 +169,12 @@ mkdir -p "${TARGET_ACL}"
 cat << 'EOF' > "${TARGET_ACL}/luci-app-openclash-flow.json"
 {
   "luci-app-openclash-flow": {
-    "description": "Grant UCI and RPC access to OpenClash Flow",
+    "description": "Grant UCI access for OpenClash Flow",
     "read": {
-      "uci": [ "openclash", "openclash_flow" ],
-      "file": {
-        "/etc/openclash/*": [ "read" ]
-      },
-      "luci": [ "admin/services/openclash_flow" ]
+      "uci": [ "openclash", "openclash_flow" ]
     },
     "write": {
-      "uci": [ "openclash", "openclash_flow" ],
-      "file": {
-        "/etc/openclash/*": [ "write" ]
-      }
+      "uci": [ "openclash", "openclash_flow" ]
     }
   }
 }
@@ -220,23 +213,25 @@ exit 0
 EOF
 chmod +x "${TARGET_BIN}/openclash-flow-cli"
 
-# 打包公共 data.tar.gz
-cd "${COMMON_DATA_DIR}"
-tar -czf "${BUILD_ROOT}/data.tar.gz" ./*
-
-# 3. 针对各架构分别打包专属 IPK
+# 3. 针对各架构分别打包专属 IPK (使用 OpenWrt 官方标准 ipkg-build)
 echo ""
 echo "📦 [3/4] 针对各个架构封装专属 control 与 IPK..."
 
 for ARCH in "${BUILD_ARCHS[@]}"; do
-  ARCH_BUILD_DIR="${BUILD_ROOT}/arch_${ARCH}"
-  mkdir -p "${ARCH_BUILD_DIR}/control"
-  IPK_NAME="${PKG_NAME}_${PKG_VERSION}_${ARCH}.ipk"
+  ARCH_PKG_DIR="${BUILD_ROOT}/pkg_${ARCH}"
+  rm -rf "${ARCH_PKG_DIR}"
+  mkdir -p "${ARCH_PKG_DIR}"
 
   echo "  🔨 正在构建 [${ARCH}]: ${ARCH_DESC[$ARCH]}"
 
+  # 复制公共 rootfs 目录树 (usr/, www/, etc/)
+  cp -a "${COMMON_DATA_DIR}/." "${ARCH_PKG_DIR}/"
+
+  # 创建 OpenWrt 标准包元数据目录 CONTROL
+  mkdir -p "${ARCH_PKG_DIR}/CONTROL"
+
   # A. 生成针对该架构的 control 文件
-  cat << EOF > "${ARCH_BUILD_DIR}/control/control"
+  cat << EOF > "${ARCH_PKG_DIR}/CONTROL/control"
 Package: ${PKG_NAME}
 Version: ${PKG_VERSION}
 Depends: libc, luci-base
@@ -248,7 +243,7 @@ Description: Visual infinite canvas rule orchestrator, step-by-step traffic simu
 EOF
 
   # B. postinst 脚本
-  cat << 'EOF' > "${ARCH_BUILD_DIR}/control/postinst"
+  cat << 'EOF' > "${ARCH_PKG_DIR}/CONTROL/postinst"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
     rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
@@ -263,10 +258,10 @@ EOF
     exit 0
 }
 EOF
-  chmod +x "${ARCH_BUILD_DIR}/control/postinst"
+  chmod 0755 "${ARCH_PKG_DIR}/CONTROL/postinst"
 
   # C. prerm 脚本
-  cat << 'EOF' > "${ARCH_BUILD_DIR}/control/prerm"
+  cat << 'EOF' > "${ARCH_PKG_DIR}/CONTROL/prerm"
 #!/bin/sh
 [ -n "${IPKG_INSTROOT}" ] || {
     rm -f /tmp/luci-indexcache /var/run/luci-indexcache 2>/dev/null || true
@@ -274,22 +269,16 @@ EOF
     exit 0
 }
 EOF
-  chmod +x "${ARCH_BUILD_DIR}/control/prerm"
+  chmod 0755 "${ARCH_PKG_DIR}/CONTROL/prerm"
 
-  # 打包 control.tar.gz
-  cd "${ARCH_BUILD_DIR}/control"
-  tar -czf "${ARCH_BUILD_DIR}/control.tar.gz" ./*
+  # D. 保护配置文件
+  echo "/etc/config/openclash_flow" > "${ARCH_PKG_DIR}/CONTROL/conffiles"
+  chmod 0644 "${ARCH_PKG_DIR}/CONTROL/conffiles"
 
-  # 写入 debian-binary 2.0
-  echo "2.0" > "${ARCH_BUILD_DIR}/debian-binary"
+  # 使用 OpenWrt 官方标准打包脚本封装生成 IPK
+  bash "${SCRIPT_DIR}/ipkg-build" "${ARCH_PKG_DIR}" "${OUT_DIR}" > /dev/null
 
-  # 将 data.tar.gz 拷贝至架构目录根部确保标准 IPK 扁平结构
-  cp "${BUILD_ROOT}/data.tar.gz" "${ARCH_BUILD_DIR}/data.tar.gz"
-
-  # 封装生成标准 IPK 归档
-  cd "${ARCH_BUILD_DIR}"
-  tar -czf "${OUT_DIR}/${IPK_NAME}" ./debian-binary ./control.tar.gz ./data.tar.gz
-
+  IPK_NAME="${PKG_NAME}_${PKG_VERSION}_${ARCH}.ipk"
   SIZE=$(ls -lh "${OUT_DIR}/${IPK_NAME}" | awk '{print $5}')
   echo "     ✅ 产物: ${IPK_NAME} (${SIZE})"
 done

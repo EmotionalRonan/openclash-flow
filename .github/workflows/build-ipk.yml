@@ -40,7 +40,7 @@ jobs:
 
       - name: 🔨 Build Multi-Architecture IPKs Matrix
         run: |
-          chmod +x ./scripts/build-ipk.sh
+          chmod +x ./scripts/build-ipk.sh ./scripts/ipkg-build
           npm run build:ipk
 
       - name: 📊 Generate Build Summary
