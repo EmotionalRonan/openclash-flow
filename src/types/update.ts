@@ -34,6 +34,7 @@ export interface UpdateCheckResult {
   release?: GitHubRelease;
   matchingAsset?: GitHubAsset;
   error?: string;
+  statusMessage?: string;
 }
 
 export type UpdatePhase = 

@@ -64,10 +64,21 @@ describe('GitHub Update Utility', () => {
     expect(mock.assets.some(a => a.arch === 'all')).toBe(true);
   });
 
-  it('performs end-to-end check update matching selected architecture', async () => {
+  it('returns hasUpdate: false and does not invent fake versions when repository has no releases on GitHub', async () => {
+    // When querying a repository that has no release, it must strictly return hasUpdate: false and keep currentVersion
     const result = await checkForAppUpdate('1.0.6-1', 'openclash-flow/luci-app-openclash-flow', 'direct', undefined, 'x86_64');
-    expect(result.hasUpdate).toBe(true);
-    expect(result.latestVersion).toBe('1.0.7-1');
-    expect(result.matchingAsset?.arch).toBe('x86_64');
+    expect(result.hasUpdate).toBe(false);
+    expect(result.latestVersion).toBe('1.0.6-1');
+  });
+
+  it('correctly compares version against simulated higher and lower releases', () => {
+    const mockHigher = getMockLatestRelease('1.0.6-1'); // v1.0.7-1
+    expect(compareVersions('1.0.6-1', mockHigher.tag_name)).toBe(1); // newer
+
+    // When current is already 1.0.7-1, comparing with 1.0.7-1 is 0
+    expect(compareVersions('1.0.7-1', mockHigher.tag_name)).toBe(0);
+
+    // When current is 1.0.8, comparing with 1.0.7-1 is -1
+    expect(compareVersions('1.0.8', mockHigher.tag_name)).toBe(-1);
   });
 });

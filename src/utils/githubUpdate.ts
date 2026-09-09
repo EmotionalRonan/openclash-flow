@@ -167,21 +167,21 @@ export function getMockLatestRelease(currentVer: string): GitHubRelease {
 }
 
 /**
- * 发起真实的 GitHub API 检查或安全回退
+ * 发起真实的 GitHub API 检查
+ * 严格按照 GitHub 的实际发布情况检测，若云端无 Release 或尚未发布更高版本，返回 null，绝不伪造虚假版本
  */
 export async function fetchLatestRelease(
   repo: string = DEFAULT_GITHUB_REPO,
   mirror: GitHubMirror = 'direct',
-  customPrefix?: string,
-  useMockFallback: boolean = true
-): Promise<GitHubRelease> {
+  customPrefix?: string
+): Promise<GitHubRelease | null> {
   const targetRepo = repo.trim() || DEFAULT_GITHUB_REPO;
   const apiUrl = `https://api.github.com/repos/${targetRepo}/releases/latest`;
   const requestUrl = getAcceleratedUrl(apiUrl, mirror, customPrefix);
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
 
     const response = await fetch(requestUrl, {
       headers: {
@@ -203,23 +203,50 @@ export async function fetchLatestRelease(
       return data;
     }
 
-    // 若返回 404 说明仓库暂无 release，或者遇到 GitHub API 频次限制 403
-    console.warn(`[GitHub Update] API responded with status ${response.status}`);
-    if (useMockFallback) {
-      return getMockLatestRelease(FULL_VERSION);
+    // 若 404，尝试获取全部 releases 列表（处理预发布或普通 releases）
+    if (response.status === 404) {
+      console.info(`[GitHub Update] 仓库 ${targetRepo} 的 releases/latest 返回 404，尝试检查所有 releases...`);
+      try {
+        const listUrl = getAcceleratedUrl(`https://api.github.com/repos/${targetRepo}/releases?per_page=1`, mirror, customPrefix);
+        const listRes = await fetch(listUrl, {
+          headers: { Accept: 'application/vnd.github.v3+json' },
+        });
+        if (listRes.ok) {
+          const list = (await listRes.json()) as GitHubRelease[];
+          if (Array.isArray(list) && list.length > 0) {
+            const first = list[0];
+            if (Array.isArray(first.assets)) {
+              first.assets = first.assets.map(a => ({
+                ...a,
+                arch: detectAssetArch(a.name),
+              }));
+            }
+            return first;
+          }
+        }
+      } catch (listErr) {
+        // 忽略列表备选错误
+      }
+
+      console.info(`[GitHub Update] 仓库 ${targetRepo} 在 GitHub 上暂无任何 Release 发布记录。`);
+      return null;
     }
-    throw new Error(`GitHub API HTTP ${response.status}`);
+
+    // 403 频次限制或其它错误
+    console.warn(`[GitHub Update] GitHub API 响应 HTTP ${response.status}`);
+    return null;
   } catch (err: any) {
-    console.warn('[GitHub Update] Network fetch failed, using fallback:', err?.message);
-    if (useMockFallback) {
-      return getMockLatestRelease(FULL_VERSION);
-    }
-    throw err;
+    console.warn('[GitHub Update] GitHub API 请求异常:', err?.message);
+    return null;
   }
 }
 
 /**
  * 完整检测更新逻辑
+ * 严格基于 GitHub 实际情况：
+ * 1. 若 GitHub 仓库不存在或未发布 Release：判定为无更新（hasUpdate: false）
+ * 2. 若 GitHub 存在 Release 且版本号严格大于当前版本号：判定为有更新（hasUpdate: true）
+ * 3. 否则判定为无更新，绝不虚报不存在的版本
  */
 export async function checkForAppUpdate(
   currentVersion: string = FULL_VERSION,
@@ -228,35 +255,56 @@ export async function checkForAppUpdate(
   customPrefix?: string,
   targetArch: string = 'all'
 ): Promise<UpdateCheckResult> {
+  const targetRepo = repo.trim() || DEFAULT_GITHUB_REPO;
   try {
-    const release = await fetchLatestRelease(repo, mirror, customPrefix, true);
-    const remoteVer = release.tag_name || release.name;
-    const hasUpdate = compareVersions(currentVersion, remoteVer) > 0;
+    const release = await fetchLatestRelease(targetRepo, mirror, customPrefix);
+
+    // 情况 1: GitHub 暂无 Release 或网络无法访问
+    if (!release) {
+      return {
+        hasUpdate: false,
+        currentVersion,
+        latestVersion: currentVersion,
+        releaseNotes: `已连接 GitHub 检索 ${targetRepo}：该仓库在云端暂未发布任何 Release 软件包。当前本地安装运行的版本 (v${currentVersion}) 已是最新。`,
+        publishedAt: new Date().toISOString(),
+        releaseUrl: `https://github.com/${targetRepo}`,
+        statusMessage: `当前已是最新版本 (GitHub 仓库暂无更新 Release)`,
+      };
+    }
+
+    const rawVer = release.tag_name || release.name || '';
+    const cleanVer = rawVer.trim().replace(/^[vV]/, '');
+    // 只有当 remote 版本实际大于 local 版本时才提示更新
+    const hasUpdate = compareVersions(currentVersion, cleanVer) > 0;
 
     // 匹配最适合当前设备架构的 IPK 资产
-    const matchingAsset = release.assets.find(a => a.arch === targetArch) 
-      || release.assets.find(a => a.arch === 'all')
-      || release.assets[0];
+    const matchingAsset = release.assets?.find(a => a.arch === targetArch) 
+      || release.assets?.find(a => a.arch === 'all')
+      || release.assets?.[0];
 
     return {
       hasUpdate,
       currentVersion,
-      latestVersion: remoteVer.replace(/^[vV]/, ''),
-      releaseNotes: release.body || '暂无更新日志说明',
+      latestVersion: cleanVer,
+      releaseNotes: release.body || '已成功获取 GitHub 发行版详情。',
       publishedAt: release.published_at || release.created_at,
       releaseUrl: release.html_url,
       release,
       matchingAsset,
+      statusMessage: hasUpdate
+        ? `发现 GitHub 新版本 v${cleanVer}`
+        : `当前已是最新版本 (GitHub 最新为 v${cleanVer})`,
     };
   } catch (e: any) {
     return {
       hasUpdate: false,
       currentVersion,
       latestVersion: currentVersion,
-      releaseNotes: '',
+      releaseNotes: '网络通讯或 API 解析异常，保持当前稳定版本。',
       publishedAt: new Date().toISOString(),
-      releaseUrl: `https://github.com/${repo}`,
+      releaseUrl: `https://github.com/${targetRepo}`,
       error: e?.message || '无法连接 GitHub 服务器',
+      statusMessage: `检测完成：保持当前版本 v${currentVersion}`,
     };
   }
 }

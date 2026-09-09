@@ -328,7 +328,7 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm sm:text-base">
-                      {hasUpdate ? `发现新版本 v${latestVer}` : '当前已是最新版本'}
+                      {hasUpdate ? `发现新版本 v${latestVer}` : (checkResult?.statusMessage || '当前已是最新版本')}
                     </span>
                     {hasUpdate && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-600 text-white shadow-xs">
@@ -339,7 +339,7 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
                   <p className="text-xs text-[#6e6e73] dark:text-[#a1a1aa] mt-0.5">
                     {hasUpdate 
                       ? `本地版本: v${currentVersion} ➔ 云端最新: v${latestVer}`
-                      : `本地运行的 v${currentVersion} 与 GitHub Release 保持同步`}
+                      : `本地运行版本 (v${currentVersion}) 与 GitHub 保持一致，未发现新版本`}
                   </p>
                 </div>
               </div>
@@ -502,15 +502,25 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
               className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold text-white shadow-md apple-press transition-all ${
                 isUpdating
                   ? 'bg-indigo-400 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/25'
+                  : hasUpdate
+                  ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/25'
+                  : 'bg-slate-700 hover:bg-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700'
               }`}
             >
               {isUpdating ? (
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
+              ) : hasUpdate ? (
                 <Sparkles className="w-3.5 h-3.5" />
+              ) : (
+                <Check className="w-3.5 h-3.5" />
               )}
-              <span>{isUpdating ? '正在升级中...' : '在界面直接更新'}</span>
+              <span>
+                {isUpdating 
+                  ? '正在安装中...' 
+                  : hasUpdate 
+                  ? '在界面直接更新' 
+                  : '重新安装当前版本'}
+              </span>
             </button>
           </div>
         </div>
