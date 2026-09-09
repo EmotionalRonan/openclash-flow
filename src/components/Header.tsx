@@ -16,11 +16,13 @@ import {
   Sun,
   Moon,
   Monitor,
-  RefreshCw
+  RefreshCw,
+  ArrowDownCircle,
+  Package
 } from 'lucide-react';
 import { OpenClashSettings } from '../types/openclash';
 import { useTheme } from '../context/ThemeContext';
-import { APP_VERSION, FULL_VERSION } from '../version';
+import { APP_VERSION, FULL_VERSION, getRuntimeVersion } from '../version';
 
 interface HeaderProps {
   activeTab: string;
@@ -31,6 +33,9 @@ interface HeaderProps {
   ruleCount: number;
   onOpenArchitecture: () => void;
   onOpenCaseStudy?: () => void;
+  onOpenUpdateModal?: () => void;
+  hasUpdate?: boolean;
+  latestVersion?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -42,9 +47,13 @@ export const Header: React.FC<HeaderProps> = ({
   ruleCount,
   onOpenArchitecture,
   onOpenCaseStudy,
+  onOpenUpdateModal,
+  hasUpdate = false,
+  latestVersion,
 }) => {
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const { themeMode, resolvedTheme, setThemeMode, toggleTheme } = useTheme();
+  const runtimeVer = getRuntimeVersion();
 
   const tabs = [
     { id: 'routing', label: '拓扑流程图', icon: Layers, badge: `${ruleCount}` },
@@ -72,9 +81,23 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] border border-black/[0.06] dark:border-white/[0.08] tracking-wider uppercase shrink-0">
                   ImmortalWRT
                 </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-400/20 shrink-0 font-mono">
-                  v{FULL_VERSION}
-                </span>
+                <button
+                  onClick={onOpenUpdateModal}
+                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-400/20 shrink-0 font-mono hover:bg-indigo-500/20 transition-colors apple-press"
+                  title="点击查看版本与检测 GitHub 更新"
+                >
+                  v{runtimeVer}
+                </button>
+                {hasUpdate && (
+                  <button
+                    onClick={onOpenUpdateModal}
+                    className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0 font-mono apple-press transition-all animate-pulse shadow-xs"
+                    title={`检测到 GitHub 新版本 v${latestVersion}，点击在界面直接更新`}
+                  >
+                    <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+                    <span>发现新版 v{latestVersion}</span>
+                  </button>
+                )}
               </div>
               <p className="text-[11px] text-[#86868b] hidden xl:block tracking-tight truncate">
                 可视化分流与智能配置引擎
@@ -139,6 +162,28 @@ export const Header: React.FC<HeaderProps> = ({
                 <Moon className="w-4 h-4 text-indigo-600" />
               )}
             </button>
+
+            {/* GitHub Update Detection button */}
+            {onOpenUpdateModal && (
+              <button
+                id="btn-github-update"
+                onClick={onOpenUpdateModal}
+                className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium border transition-all apple-press shadow-sm shrink-0 whitespace-nowrap ${
+                  hasUpdate
+                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600 shadow-indigo-600/25 ring-2 ring-indigo-500/20'
+                    : 'bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] border-black/[0.08] dark:border-white/[0.08]'
+                }`}
+                title={hasUpdate ? `GitHub 发现新版本 v${latestVersion}，点击在界面直接更新` : 'GitHub 更新检测与一键热升级'}
+              >
+                <ArrowDownCircle className={`w-3.5 h-3.5 ${hasUpdate ? 'animate-bounce text-white' : 'text-indigo-600 dark:text-indigo-400'}`} />
+                <span className="hidden sm:inline whitespace-nowrap">
+                  {hasUpdate ? `更新 v${latestVersion}` : '更新检测'}
+                </span>
+                {hasUpdate && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5 ring-2 ring-white dark:ring-[#14151c]" />
+                )}
+              </button>
+            )}
 
             {/* Case Study Guide button */}
             {onOpenCaseStudy && (
@@ -383,6 +428,39 @@ export const Header: React.FC<HeaderProps> = ({
                   onChange={(e) => setSettings({ ...settings, redirPort: parseInt(e.target.value, 10) || 7892 })}
                   className="w-full bg-black/[0.03] dark:bg-[#0c0d12] border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 />
+              </div>
+
+              {/* GitHub Update section inside Settings modal */}
+              <div className="col-span-1 md:col-span-2 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#1d1d1f] dark:text-white">GitHub 固件与插件更新</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold">
+                      v{runtimeVer}
+                    </span>
+                    {hasUpdate && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                        发现新版 v{latestVersion}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#86868b] mt-0.5">
+                    实时检索 GitHub Release 仓库，支持在网页界面内一键在线热升级或离线安装
+                  </p>
+                </div>
+                {onOpenUpdateModal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSettingsModal(false);
+                      onOpenUpdateModal();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold apple-press shadow-sm shrink-0"
+                  >
+                    <ArrowDownCircle className="w-3.5 h-3.5" />
+                    <span>{hasUpdate ? '在界面直接更新' : '检测最新版本'}</span>
+                  </button>
+                )}
               </div>
             </div>
 

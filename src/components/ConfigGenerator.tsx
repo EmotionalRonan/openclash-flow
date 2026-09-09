@@ -19,11 +19,13 @@ import {
   Boxes,
   HardDrive,
   FileCheck,
-  Code
+  Code,
+  ArrowDownCircle
 } from 'lucide-react';
 import { OpenClashSettings, ProxyNode, PolicyGroup, TrafficRule } from '../types/openclash';
 import { generateOpenClashYaml, generateImmortalWrtUciScript } from '../utils/parser';
 import { APP_VERSION, FULL_VERSION } from '../version';
+import { UpdateCheckResult } from '../types/update';
 
 interface ConfigGeneratorProps {
   settings: OpenClashSettings;
@@ -33,6 +35,8 @@ interface ConfigGeneratorProps {
   rules: TrafficRule[];
   setRules: React.Dispatch<React.SetStateAction<TrafficRule[]>>;
   setPolicyGroups: React.Dispatch<React.SetStateAction<PolicyGroup[]>>;
+  onOpenUpdateModal?: () => void;
+  updateResult?: UpdateCheckResult | null;
 }
 
 export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
@@ -43,6 +47,8 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
   rules,
   setRules,
   setPolicyGroups,
+  onOpenUpdateModal,
+  updateResult,
 }) => {
   const [activeTab, setActiveTab] = useState<'yaml' | 'uci' | 'sync' | 'ipk'>('ipk');
   const [selectedArch, setSelectedArch] = useState<string>('all');
@@ -448,6 +454,42 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isBuildingIpk ? 'animate-spin text-amber-500' : ''}`} />
                 <span>{isBuildingIpk ? '打包中...' : '重新编译全部架构'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* GitHub Cloud Release & In-App Direct Update Card */}
+          <div className="p-4 rounded-2xl bg-indigo-500/[0.05] dark:bg-indigo-500/[0.1] border border-indigo-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+                <ArrowDownCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
+                    GitHub 固件云端更新检测与界面一键热升级
+                  </span>
+                  {updateResult?.hasUpdate && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white animate-pulse">
+                      发现新版 v{updateResult.latestVersion}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[#6e6e73] dark:text-[#a1a1aa] mt-0.5">
+                  {updateResult?.hasUpdate
+                    ? `云端已发布新版本 v${updateResult.latestVersion}，支持在浏览器界面直接点击免编译热升级`
+                    : `当前运行版本 v${FULL_VERSION}，支持全天候检测 GitHub Release 与自动匹配 6 大硬件架构`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <button
+                onClick={onOpenUpdateModal}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold apple-press shadow-sm transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{updateResult?.hasUpdate ? '在界面直接更新' : '检测 GitHub 更新'}</span>
               </button>
             </div>
           </div>

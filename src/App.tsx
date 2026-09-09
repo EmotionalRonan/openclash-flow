@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Layers, 
   Radio, 
@@ -15,6 +15,8 @@ import {
 import { Header } from './components/Header';
 import { ArchitectureModal } from './components/ArchitectureModal';
 import { CaseStudyModal } from './components/CaseStudyModal';
+import { GitHubUpdateModal } from './components/GitHubUpdateModal';
+import { UpdateNotificationBanner } from './components/UpdateNotificationBanner';
 import { DragDropRuleBoard } from './components/DragDropRuleBoard';
 import { NodeManager } from './components/NodeManager';
 import { RuleDebugger } from './components/RuleDebugger';
@@ -32,18 +34,41 @@ import {
   TrafficRule, 
   OpenClashSettings 
 } from './types/openclash';
-import { FULL_VERSION } from './version';
+import { UpdateCheckResult } from './types/update';
+import { checkForAppUpdate, DEFAULT_GITHUB_REPO } from './utils/githubUpdate';
+import { FULL_VERSION, getRuntimeVersion } from './version';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('routing');
   const [showArchitectureModal, setShowArchitectureModal] = useState<boolean>(false);
   const [showCaseStudyModal, setShowCaseStudyModal] = useState<boolean>(false);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+  const [showUpdateBanner, setShowUpdateBanner] = useState<boolean>(false);
+  const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
+  const [runtimeVer, setRuntimeVer] = useState<string>(getRuntimeVersion());
 
   // Core State
   const [settings, setSettings] = useState<OpenClashSettings>(DEFAULT_OPENCLASH_SETTINGS);
   const [policyGroups, setPolicyGroups] = useState<PolicyGroup[]>(INITIAL_POLICY_GROUPS);
   const [proxies, setProxies] = useState<ProxyNode[]>(INITIAL_PROXIES);
   const [rules, setRules] = useState<TrafficRule[]>(INITIAL_TRAFFIC_RULES);
+
+  // Auto-check GitHub updates on app start
+  useEffect(() => {
+    const repo = localStorage.getItem('openclash_github_repo') || DEFAULT_GITHUB_REPO;
+    const mirror = (localStorage.getItem('openclash_github_mirror') as any) || 'direct';
+
+    checkForAppUpdate(runtimeVer, repo, mirror)
+      .then((res) => {
+        setUpdateResult(res);
+        if (res.hasUpdate) {
+          setShowUpdateBanner(true);
+        }
+      })
+      .catch((err) => {
+        console.warn('Initial update check error:', err);
+      });
+  }, [runtimeVer]);
 
   // One-click apply case topology (ChatGPT分流到香港专线，国内直连)
   const handleApplyCaseTopology = () => {
@@ -105,6 +130,9 @@ export default function App() {
         ruleCount={rules.length}
         onOpenArchitecture={() => setShowArchitectureModal(true)}
         onOpenCaseStudy={() => setShowCaseStudyModal(true)}
+        onOpenUpdateModal={() => setShowUpdateModal(true)}
+        hasUpdate={updateResult?.hasUpdate}
+        latestVersion={updateResult?.latestVersion}
       />
 
       {/* Main Content Area (Responsive padding full width 100%) */}
@@ -159,6 +187,8 @@ export default function App() {
             rules={rules}
             setRules={setRules}
             setPolicyGroups={setPolicyGroups}
+            onOpenUpdateModal={() => setShowUpdateModal(true)}
+            updateResult={updateResult}
           />
         )}
 
@@ -169,7 +199,15 @@ export default function App() {
         <div className="w-full px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-            <span className="text-[#1d1d1f] dark:text-[#d4d4d8]">OpenClash Flow v{FULL_VERSION} • 专为 ImmortalWRT 路由器优化</span>
+            <span className="text-[#1d1d1f] dark:text-[#d4d4d8]">OpenClash Flow v{runtimeVer} • 专为 ImmortalWRT 路由器优化</span>
+            {updateResult?.hasUpdate && (
+              <button
+                onClick={() => setShowUpdateModal(true)}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white animate-pulse"
+              >
+                云端新版 v{updateResult.latestVersion} 可用
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-4 text-[#6e6e73] dark:text-[#8e8e93]">
             <button
@@ -177,6 +215,13 @@ export default function App() {
               className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               系统架构与交互流程
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => setShowUpdateModal(true)}
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              GitHub 更新检测
             </button>
             <span>•</span>
             <a
@@ -204,6 +249,36 @@ export default function App() {
         onClose={() => setShowCaseStudyModal(false)}
         onApplyCaseTopology={handleApplyCaseTopology}
       />
+
+      {/* GitHub Update & In-App Upgrade Modal */}
+      <GitHubUpdateModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        initialCheckResult={updateResult}
+        onUpdateSuccess={(newVer) => {
+          setRuntimeVer(newVer);
+          setShowUpdateBanner(false);
+          if (updateResult) {
+            setUpdateResult({
+              ...updateResult,
+              hasUpdate: false,
+              currentVersion: newVer,
+            });
+          }
+        }}
+      />
+
+      {/* Floating Update Notification Toast */}
+      {showUpdateBanner && (
+        <UpdateNotificationBanner
+          updateResult={updateResult}
+          onOpenUpdateModal={() => {
+            setShowUpdateBanner(false);
+            setShowUpdateModal(true);
+          }}
+          onDismiss={() => setShowUpdateBanner(false)}
+        />
+      )}
 
     </div>
   );
