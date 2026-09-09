@@ -104,10 +104,18 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   } | null>(null);
   const [connectingMousePos, setConnectingMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Palette drawer (collapsed on tablet/mobile by default to maximize canvas space)
-  const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(() => {
-    return typeof window !== 'undefined' ? window.innerWidth >= 1280 : true;
-  });
+  // Palette drawer (default to collapsed as requested)
+  const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+
+  // Rule Layer Search & Filter & Creation State (CRUD support)
+  const [ruleSearchQuery, setRuleSearchQuery] = useState<string>('');
+  const [ruleCategoryFilter, setRuleCategoryFilter] = useState<string>('all');
+  const [showAddRuleModal, setShowAddRuleModal] = useState<boolean>(false);
+  const [newRuleType, setNewRuleType] = useState<RuleType>('DOMAIN-SUFFIX');
+  const [newRulePayload, setNewRulePayload] = useState<string>('');
+  const [newRuleTargetGroup, setNewRuleTargetGroup] = useState<string>('');
+  const [newRuleComment, setNewRuleComment] = useState<string>('');
+  const [newRuleCategory, setNewRuleCategory] = useState<RuleCategoryItem['id']>('custom');
 
   // Simulation State
   const [simState, setSimState] = useState<StepSimulationState>({
@@ -121,10 +129,28 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
   });
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
 
-  // 1. Initialize Layout Algorithm to place nodes in 4 Pipeline Stage Columns
+  // 1. Initialize Layout Algorithm to place nodes in 4 Pipeline Stage Columns based on CURRENT CONFIG
   const autoLayoutNodes = useCallback(() => {
     const newNodes: CanvasNodeData[] = [];
     const newEdges: CanvasEdge[] = [];
+
+    // Filter Step 2 Rules according to search and category filter
+    const activeRules = rules.filter((r) => {
+      if (ruleCategoryFilter !== 'all' && r.category !== ruleCategoryFilter) return false;
+      if (ruleSearchQuery.trim()) {
+        const q = ruleSearchQuery.toLowerCase().trim();
+        const matchPayload = r.payload.toLowerCase().includes(q);
+        const matchComment = (r.comment || '').toLowerCase().includes(q);
+        const matchType = r.type.toLowerCase().includes(q);
+        const matchTarget = (r.targetGroup || '').toLowerCase().includes(q);
+        return matchPayload || matchComment || matchType || matchTarget;
+      }
+      return true;
+    });
+
+    const ruleCount = activeRules.length;
+    const maxRows = Math.max(ruleCount, policyGroups.length, proxies.length, 3);
+    const inboundY = Math.max(80, Math.min(260, (maxRows * 135) / 2 - 75));
 
     // Step 1: Inbound Node
     const inboundNode: CanvasNodeData = {
@@ -133,7 +159,7 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       title: '局域网流量入口 (Inbound)',
       subtitle: 'Fake-IP DNS 劫持 + TUN 虚拟网卡',
       x: 60,
-      y: 180,
+      y: inboundY,
       width: 250,
       height: 150,
       step: 1,
@@ -141,8 +167,7 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     };
     newNodes.push(inboundNode);
 
-    // Step 2: Rule Nodes (Top rules)
-    const activeRules = rules.slice(0, 7); // Display primary rules cleanly on canvas
+    // Step 2: Rule Nodes (Generated strictly from current rules state)
     activeRules.forEach((rule, idx) => {
       const ruleNode: CanvasNodeData = {
         id: `node-rule-${rule.id}`,
@@ -150,15 +175,15 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         title: rule.comment || rule.payload,
         subtitle: `匹配: ${rule.payload}`,
         x: 440,
-        y: 40 + idx * 145,
+        y: 40 + idx * 135,
         width: 260,
-        height: 125,
+        height: 120,
         step: 2,
         stepName: '分流规则',
         ruleType: rule.type,
         payload: rule.payload,
         targetGroup: rule.targetGroup,
-        enabled: rule.enabled,
+        enabled: rule.enabled !== false,
         rawId: rule.id,
       };
       newNodes.push(ruleNode);
@@ -174,17 +199,17 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       });
     });
 
-    // Step 3: Policy Groups
-    policyGroups.slice(0, 6).forEach((group, idx) => {
+    // Step 3: Policy Groups (Generated from current policyGroups state)
+    policyGroups.forEach((group, idx) => {
       const groupNode: CanvasNodeData = {
         id: `node-group-${group.id}`,
         type: 'group',
         title: group.name,
         subtitle: group.description || '策略分流调度组',
         x: 840,
-        y: 40 + idx * 145,
+        y: 40 + idx * 135,
         width: 260,
-        height: 125,
+        height: 120,
         step: 3,
         stepName: '策略调度',
         groupType: group.type,
@@ -194,17 +219,17 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       newNodes.push(groupNode);
     });
 
-    // Step 4: Outbound Proxies
-    proxies.slice(0, 6).forEach((proxy, idx) => {
+    // Step 4: Outbound Proxies (Generated from current proxies state)
+    proxies.forEach((proxy, idx) => {
       const outboundNode: CanvasNodeData = {
         id: `node-proxy-${proxy.id}`,
         type: 'outbound',
         title: proxy.name,
         subtitle: `${proxy.server}:${proxy.port}`,
         x: 1240,
-        y: 40 + idx * 145,
+        y: 40 + idx * 135,
         width: 250,
-        height: 125,
+        height: 120,
         step: 4,
         stepName: '物理出口',
         nodeType: proxy.type,
@@ -222,32 +247,67 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
       title: '🇨🇳 DIRECT 直连',
       subtitle: '国内流量直通 WAN 网关',
       x: 1240,
-      y: 40 + proxies.slice(0, 6).length * 145,
+      y: 40 + proxies.length * 135,
       width: 250,
-      height: 110,
+      height: 100,
       step: 4,
       stepName: '直连网关',
       nodeType: 'direct',
     };
     newNodes.push(directSink);
 
-    // Dynamic Connections between Rules -> Groups
+    const rejectSink: CanvasNodeData = {
+      id: 'node-sink-reject',
+      type: 'outbound',
+      title: '🛑 REJECT 拦截',
+      subtitle: '广告/黑名单丢弃阻断',
+      x: 1240,
+      y: 40 + (proxies.length + 1) * 135,
+      width: 250,
+      height: 100,
+      step: 4,
+      stepName: '安全拦截',
+      nodeType: 'direct',
+    };
+    newNodes.push(rejectSink);
+
+    // Dynamic Connections between Rules -> Groups / Sinks
     activeRules.forEach((rule) => {
-      const matchingGroup = policyGroups.find((g) => g.name === rule.targetGroup);
-      if (matchingGroup) {
+      if (rule.targetGroup === 'DIRECT') {
         newEdges.push({
-          id: `edge-rule-${rule.id}-group-${matchingGroup.id}`,
+          id: `edge-rule-${rule.id}-direct`,
           fromNodeId: `node-rule-${rule.id}`,
           fromPort: 'out',
-          toNodeId: `node-group-${matchingGroup.id}`,
+          toNodeId: directSink.id,
           toPort: 'in',
-          color: '#6366f1',
+          color: '#0ea5e9',
         });
+      } else if (rule.targetGroup === 'REJECT') {
+        newEdges.push({
+          id: `edge-rule-${rule.id}-reject`,
+          fromNodeId: `node-rule-${rule.id}`,
+          fromPort: 'out',
+          toNodeId: rejectSink.id,
+          toPort: 'in',
+          color: '#f43f5e',
+        });
+      } else {
+        const matchingGroup = policyGroups.find((g) => g.name === rule.targetGroup);
+        if (matchingGroup) {
+          newEdges.push({
+            id: `edge-rule-${rule.id}-group-${matchingGroup.id}`,
+            fromNodeId: `node-rule-${rule.id}`,
+            fromPort: 'out',
+            toNodeId: `node-group-${matchingGroup.id}`,
+            toPort: 'in',
+            color: '#6366f1',
+          });
+        }
       }
     });
 
-    // Dynamic Connections between Groups -> Outbounds
-    policyGroups.slice(0, 6).forEach((group) => {
+    // Dynamic Connections between Groups -> Outbounds / Direct
+    policyGroups.forEach((group) => {
       group.proxies.forEach((proxyName) => {
         const matchingProxy = proxies.find((p) => p.name === proxyName);
         if (matchingProxy) {
@@ -268,13 +328,22 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
             toPort: 'in',
             color: '#0ea5e9',
           });
+        } else if (proxyName === 'REJECT') {
+          newEdges.push({
+            id: `edge-group-${group.id}-reject`,
+            fromNodeId: `node-group-${group.id}`,
+            fromPort: 'out',
+            toNodeId: rejectSink.id,
+            toPort: 'in',
+            color: '#f43f5e',
+          });
         }
       });
     });
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [rules, policyGroups, proxies]);
+  }, [rules, policyGroups, proxies, ruleSearchQuery, ruleCategoryFilter]);
 
   // Initial layout effect
   useEffect(() => {
@@ -1029,8 +1098,31 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     return () => clearTimeout(timer);
   }, [isAutoPlaying, simState.isActive, simState.currentStep]);
 
+  // Quick Add Rule Submit
+  const handleAddRuleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRulePayload.trim()) return;
+
+    const ruleId = `custom-rule-${Date.now()}`;
+    const target = newRuleTargetGroup || policyGroups[0]?.name || 'DIRECT';
+    const newRule: TrafficRule = {
+      id: ruleId,
+      type: newRuleType,
+      payload: newRulePayload.trim(),
+      targetGroup: target,
+      comment: newRuleComment.trim() || newRulePayload.trim(),
+      enabled: true,
+      category: newRuleCategory,
+    };
+
+    setRules((prev) => [newRule, ...prev]);
+    setNewRulePayload('');
+    setNewRuleComment('');
+    setShowAddRuleModal(false);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Step Simulation Controls Toolbar */}
       <StepSimulatorBar
         simState={simState}
@@ -1044,6 +1136,77 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
         }}
         isAutoPlaying={isAutoPlaying}
       />
+
+      {/* Step 2 Rule Matching Layer Dynamic Config & CRUD Strip */}
+      <div className="apple-glass rounded-2xl p-2.5 sm:p-3 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 shadow-sm text-xs">
+        {/* Left: Search rule payload / comment */}
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          <div className="flex items-center gap-1.5 font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] shrink-0">
+            <ShieldCheck className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+            <span>规则匹配层</span>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-500/20 font-mono">
+              {rules.length} 条已配置
+            </span>
+          </div>
+
+          {/* Quick Search */}
+          <div className="relative min-w-[170px] max-w-xs flex-1">
+            <input
+              type="text"
+              placeholder="搜索规则 (payload / 域名 / IP)..."
+              value={ruleSearchQuery}
+              onChange={(e) => setRuleSearchQuery(e.target.value)}
+              className="w-full pl-3 pr-6 py-1 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#1d1d1f] dark:text-[#f5f5f7] placeholder-[#86868b] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            {ruleSearchQuery && (
+              <button
+                onClick={() => setRuleSearchQuery('')}
+                className="absolute right-2 top-1.5 text-[10px] text-[#86868b] hover:text-black dark:hover:text-white"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Category Filter Chips */}
+          <div className="flex items-center gap-1 overflow-x-auto py-0.5 text-xs">
+            {[
+              { id: 'all', label: '全部' },
+              { id: 'ai', label: 'AI模型' },
+              { id: 'media', label: '流媒体' },
+              { id: 'adblock', label: '广告拦截' },
+              { id: 'domestic', label: '国内直连' },
+              { id: 'custom', label: '自定义' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setRuleCategoryFilter(cat.id)}
+                className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-all apple-press font-medium text-[11px] ${
+                  ruleCategoryFilter === cat.id
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Quick Add Rule Button */}
+        <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+          <button
+            onClick={() => {
+              setNewRuleTargetGroup(policyGroups[0]?.name || 'DIRECT');
+              setShowAddRuleModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-xs apple-press transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>添加分流规则</span>
+          </button>
+        </div>
+      </div>
 
       {/* Main Infinite Canvas Box */}
       <div
@@ -1300,6 +1463,135 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
           onSaveEdge={handleSaveEdge}
           onDeleteEdge={handleDeleteEdge}
         />
+
+        {/* Quick Add Rule Modal */}
+        {showAddRuleModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-150">
+            <div className="apple-glass rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-black/[0.1] dark:border-white/[0.12] animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-indigo-500 dark:text-cyan-400" />
+                  <h3 className="text-base font-semibold text-[#1d1d1f] dark:text-white">添加分流匹配规则</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddRuleModal(false)}
+                  className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.06] hover:bg-black/[0.1] dark:hover:bg-white/[0.12] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white flex items-center justify-center text-xs apple-press transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddRuleSubmit} className="space-y-3.5 text-xs">
+                {/* Rule Type */}
+                <div>
+                  <label className="block text-xs font-medium text-[#6e6e73] dark:text-[#86868b] mb-1">
+                    规则类型 (Type)
+                  </label>
+                  <select
+                    value={newRuleType}
+                    onChange={(e) => setNewRuleType(e.target.value as RuleType)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="DOMAIN-SUFFIX">DOMAIN-SUFFIX (域名后缀)</option>
+                    <option value="DOMAIN">DOMAIN (精确域名)</option>
+                    <option value="DOMAIN-KEYWORD">DOMAIN-KEYWORD (域名关键字)</option>
+                    <option value="IP-CIDR">IP-CIDR (IPv4 地址段)</option>
+                    <option value="GEOIP">GEOIP (国家/地理 IP 代码)</option>
+                    <option value="MATCH">MATCH (全量兜底匹配)</option>
+                  </select>
+                </div>
+
+                {/* Payload */}
+                <div>
+                  <label className="block text-xs font-medium text-[#6e6e73] dark:text-[#86868b] mb-1">
+                    匹配目标 / 载荷 (Payload)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="例如: openai.com 或 192.168.1.0/24 或 CN"
+                    value={newRulePayload}
+                    onChange={(e) => setNewRulePayload(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
+                </div>
+
+                {/* Target Policy Group */}
+                <div>
+                  <label className="block text-xs font-medium text-[#6e6e73] dark:text-[#86868b] mb-1">
+                    分流指向策略组 (Target Group)
+                  </label>
+                  <select
+                    value={newRuleTargetGroup}
+                    onChange={(e) => setNewRuleTargetGroup(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="DIRECT">🇨🇳 DIRECT (直连)</option>
+                    <option value="REJECT">🛑 REJECT (拦截丢弃)</option>
+                    {policyGroups.map((g) => (
+                      <option key={g.id} value={g.name}>
+                        {g.name} ({g.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category & Comment */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-[#6e6e73] dark:text-[#86868b] mb-1">
+                      分类分类 (Category)
+                    </label>
+                    <select
+                      value={newRuleCategory}
+                      onChange={(e) => setNewRuleCategory(e.target.value as RuleCategoryItem['id'])}
+                      className="w-full px-3 py-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="ai">🤖 AI / 模型访问</option>
+                      <option value="media">🎬 流媒体 / 视频</option>
+                      <option value="gaming">🎮 游戏加速</option>
+                      <option value="adblock">🛡️ 广告拦截</option>
+                      <option value="domestic">🇨🇳 国内直连</option>
+                      <option value="custom">⚙️ 自定义规则</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-[#6e6e73] dark:text-[#86868b] mb-1">
+                      规则名称 / 备注
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="例如: OpenAI 访问加速"
+                      value={newRuleComment}
+                      onChange={(e) => setNewRuleComment(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="pt-3 border-t border-black/[0.06] dark:border-white/[0.06] flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddRuleModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 apple-press transition-all flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>添加并注入拓扑</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

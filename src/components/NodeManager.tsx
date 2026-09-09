@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Radio, 
   DownloadCloud, 
@@ -14,7 +14,11 @@ import {
   Sparkles, 
   Globe, 
   Copy, 
-  Check 
+  Check,
+  Search,
+  ArrowUpDown,
+  SlidersHorizontal,
+  LayoutGrid
 } from 'lucide-react';
 import { ProxyNode, PolicyGroup } from '../types/openclash';
 import { parseSubscriptionInput, detectCountryFromNodeName } from '../utils/parser';
@@ -25,6 +29,16 @@ interface NodeManagerProps {
   policyGroups: PolicyGroup[];
   setPolicyGroups: React.Dispatch<React.SetStateAction<PolicyGroup[]>>;
 }
+
+type SortOption = 
+  | 'default'
+  | 'latency-asc'
+  | 'latency-desc'
+  | 'name-asc'
+  | 'name-desc'
+  | 'type'
+  | 'country'
+  | 'port';
 
 export const NodeManager: React.FC<NodeManagerProps> = ({
   proxies,
@@ -39,8 +53,11 @@ export const NodeManager: React.FC<NodeManagerProps> = ({
   const [isTestingLatency, setIsTestingLatency] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  // Filter by country
+  // Filter & Search & Sort states
   const [countryFilter, setCountryFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [isCompact, setIsCompact] = useState<boolean>(true);
 
   // Manual add node state
   const [showAddNodeModal, setShowAddNodeModal] = useState(false);
@@ -54,10 +71,47 @@ export const NodeManager: React.FC<NodeManagerProps> = ({
   // Countries present in current proxies
   const countries = Array.from(new Set(proxies.map((p) => p.country || 'UN'))).filter(Boolean);
 
-  const filteredProxies = proxies.filter((p) => {
-    if (countryFilter === 'all') return true;
-    return p.country === countryFilter;
-  });
+  // Filtered and Sorted Proxies
+  const processedProxies = useMemo(() => {
+    return proxies
+      .filter((p) => {
+        if (countryFilter !== 'all' && p.country !== countryFilter) return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const matchName = p.name.toLowerCase().includes(q);
+          const matchServer = p.server.toLowerCase().includes(q);
+          const matchType = p.type.toLowerCase().includes(q);
+          const matchCountry = (p.country || '').toLowerCase().includes(q);
+          const matchPort = String(p.port).includes(q);
+          return matchName || matchServer || matchType || matchCountry || matchPort;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'latency-asc') {
+          return (a.latency ?? 9999) - (b.latency ?? 9999);
+        }
+        if (sortBy === 'latency-desc') {
+          return (b.latency ?? 0) - (a.latency ?? 0);
+        }
+        if (sortBy === 'name-asc') {
+          return a.name.localeCompare(b.name, 'zh-CN');
+        }
+        if (sortBy === 'name-desc') {
+          return b.name.localeCompare(a.name, 'zh-CN');
+        }
+        if (sortBy === 'type') {
+          return a.type.localeCompare(b.type);
+        }
+        if (sortBy === 'country') {
+          return (a.country || '').localeCompare(b.country || '');
+        }
+        if (sortBy === 'port') {
+          return a.port - b.port;
+        }
+        return 0;
+      });
+  }, [proxies, countryFilter, searchQuery, sortBy]);
 
   // Handle Import
   const handlePerformImport = () => {
@@ -306,69 +360,154 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
         </div>
       </div>
 
-      {/* Country Filter Strip */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-[#6e6e73] dark:text-[#86868b] font-medium whitespace-nowrap">地区筛选:</span>
-        <button
-          onClick={() => setCountryFilter('all')}
-          className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all apple-press font-medium ${
-            countryFilter === 'all'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
-          }`}
-        >
-          全部节点 ({proxies.length})
-        </button>
-        {countries.map((c) => {
-          const count = proxies.filter((p) => p.country === c).length;
-          const flag = proxies.find((p) => p.country === c)?.flag || '🌐';
-          return (
+      {/* Search, Sort & Filter Strip */}
+      <div className="apple-glass rounded-2xl p-3 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shadow-sm">
+        
+        {/* Left: Search input & Country Filter */}
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          {/* Quick Search */}
+          <div className="relative min-w-[200px] max-w-xs flex-1">
+            <Search className="w-3.5 h-3.5 text-[#86868b] dark:text-[#71717a] absolute left-2.5 top-2.5" />
+            <input
+              type="text"
+              placeholder="搜索节点 (名称/IP/协议)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#1d1d1f] dark:text-[#f5f5f7] placeholder-[#86868b] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-2 text-[10px] text-[#86868b] hover:text-black dark:hover:text-white"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Country Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 text-xs">
             <button
-              key={c}
-              onClick={() => setCountryFilter(c)}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all apple-press font-medium flex items-center gap-1.5 ${
-                countryFilter === c
-                  ? 'bg-indigo-600 text-white shadow-sm'
+              onClick={() => setCountryFilter('all')}
+              className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-all apple-press font-medium text-[11px] ${
+                countryFilter === 'all'
+                  ? 'bg-indigo-600 text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
               }`}
             >
-              <span>{flag}</span>
-              <span>{c}</span>
-              <span className="text-[10px] opacity-70">({count})</span>
+              全部 ({proxies.length})
             </button>
-          );
-        })}
+            {countries.map((c) => {
+              const count = proxies.filter((p) => p.country === c).length;
+              const flag = proxies.find((p) => p.country === c)?.flag || '🌐';
+              return (
+                <button
+                  key={c}
+                  onClick={() => setCountryFilter(c)}
+                  className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-all apple-press font-medium text-[11px] flex items-center gap-1 ${
+                    countryFilter === c
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
+                  }`}
+                >
+                  <span>{flag}</span>
+                  <span>{c}</span>
+                  <span className="text-[10px] opacity-70">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: Sort Options & Density Switch */}
+        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/[0.04] px-2.5 py-1 rounded-xl border border-black/[0.06] dark:border-white/[0.06]">
+            <ArrowUpDown className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+            <span className="text-[11px] text-[#6e6e73] dark:text-[#86868b] font-medium whitespace-nowrap">排序:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="bg-transparent text-xs text-[#1d1d1f] dark:text-[#f5f5f7] font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="default" className="dark:bg-[#1c1d24]">默认顺序 (订阅原序)</option>
+              <option value="latency-asc" className="dark:bg-[#1c1d24]">⚡ 延迟由低到高 (最快)</option>
+              <option value="latency-desc" className="dark:bg-[#1c1d24]">⏳ 延迟由高到低</option>
+              <option value="name-asc" className="dark:bg-[#1c1d24]">🔤 节点名称 (A → Z)</option>
+              <option value="name-desc" className="dark:bg-[#1c1d24]">🔤 节点名称 (Z → A)</option>
+              <option value="country" className="dark:bg-[#1c1d24]">🌐 国家/地区</option>
+              <option value="type" className="dark:bg-[#1c1d24]">🛡️ 协议类型 (VLESS/Hy2...)</option>
+              <option value="port" className="dark:bg-[#1c1d24]">🔢 端口号</option>
+            </select>
+          </div>
+
+          {/* Density Switch */}
+          <button
+            onClick={() => setIsCompact(!isCompact)}
+            className={`px-2.5 py-1 rounded-xl text-xs font-medium border border-black/[0.06] dark:border-white/[0.06] flex items-center gap-1 transition-colors apple-press ${
+              isCompact
+                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30'
+                : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] dark:text-[#a1a1aa]'
+            }`}
+            title={isCompact ? '切换为标准大卡片' : '切换为紧凑小卡片'}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span className="text-[11px]">{isCompact ? '紧凑小卡' : '标准卡片'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Nodes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredProxies.map((node) => {
+      {/* Nodes Count Summary */}
+      <div className="flex items-center justify-between px-1 text-[11px] text-[#86868b] dark:text-[#71717a]">
+        <span>
+          显示 <strong className="text-[#1d1d1f] dark:text-[#f5f5f7] font-semibold">{processedProxies.length}</strong> / {proxies.length} 个节点
+          {searchQuery && ` (匹配 "${searchQuery}")`}
+        </span>
+        {processedProxies.length === 0 && (
+          <span className="text-amber-600 dark:text-amber-400">无匹配节点，请调整筛选条件</span>
+        )}
+      </div>
+
+      {/* Nodes Grid (Compact & Sleek Layout) */}
+      <div
+        className={`grid gap-2.5 sm:gap-3 ${
+          isCompact
+            ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5'
+            : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        }`}
+      >
+        {processedProxies.map((node) => {
           const isCopied = copiedId === node.id;
 
           return (
             <div
               key={node.id}
-              className="apple-glass rounded-3xl p-4 sm:p-5 border border-black/[0.08] dark:border-white/[0.08] hover:border-indigo-400/50 hover:shadow-xl transition-all duration-200 space-y-3 flex flex-col justify-between"
+              className={`apple-glass rounded-2xl border border-black/[0.08] dark:border-white/[0.08] hover:border-indigo-400/50 hover:shadow-md transition-all duration-200 flex flex-col justify-between ${
+                isCompact ? 'p-3 space-y-2' : 'p-4 space-y-3'
+              }`}
             >
               <div>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl shrink-0">{node.flag || '🌐'}</span>
-                    <div>
-                      <h3 className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] truncate max-w-[170px]" title={node.name}>
+                {/* Header: Flag, Name, Type, Latency */}
+                <div className="flex items-start justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span className="text-base shrink-0 select-none">{node.flag || '🌐'}</span>
+                    <div className="min-w-0 flex-1">
+                      <h3
+                        className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] truncate"
+                        title={node.name}
+                      >
                         {node.name}
                       </h3>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 font-semibold">
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[9px] font-mono uppercase px-1 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-500/30 font-semibold leading-tight">
                           {node.type}
                         </span>
                         {node.tls && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 font-medium">
+                          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-500/20 font-medium leading-tight">
                             TLS
                           </span>
                         )}
                         {node.realityOpts && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 font-medium">
+                          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-500/20 font-medium leading-tight">
                             REALITY
                           </span>
                         )}
@@ -376,10 +515,10 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                     </div>
                   </div>
 
-                  {/* Ping / Latency Badge */}
-                  <div className="shrink-0 text-right">
+                  {/* Latency Pill */}
+                  <div className="shrink-0">
                     <span
-                      className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                      className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
                         (node.latency || 999) < 80
                           ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30'
                           : (node.latency || 999) < 160
@@ -396,54 +535,53 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                             : 'bg-rose-500'
                         }`}
                       />
-                      {node.latency ? `${node.latency} ms` : '未测速'}
+                      {node.latency ? `${node.latency}ms` : '--'}
                     </span>
                   </div>
                 </div>
 
-                {/* Server & Port details */}
-                <div className="mt-3 p-2.5 rounded-2xl bg-slate-100/90 dark:bg-slate-950/80 border border-black/[0.06] dark:border-slate-800/80 font-mono text-[11px] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#6e6e73] dark:text-slate-500">服务器:</span>
-                    <span className="text-[#1d1d1f] dark:text-slate-300 truncate max-w-[150px] font-medium">{node.server}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#6e6e73] dark:text-slate-500">端口:</span>
-                    <span className="text-[#1d1d1f] dark:text-slate-300 font-medium">{node.port}</span>
+                {/* Server & Port Strip */}
+                <div className="mt-2 p-2 rounded-xl bg-slate-100/90 dark:bg-slate-950/70 border border-black/[0.04] dark:border-slate-800/80 font-mono text-[10px] space-y-0.5">
+                  <div className="flex items-center justify-between text-[#6e6e73] dark:text-slate-400">
+                    <span className="truncate max-w-[140px] font-medium text-[#1d1d1f] dark:text-slate-300" title={node.server}>
+                      {node.server}
+                    </span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 shrink-0 ml-1">
+                      :{node.port}
+                    </span>
                   </div>
                   {node.sni && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#6e6e73] dark:text-slate-500">SNI / Host:</span>
-                      <span className="text-[#1d1d1f] dark:text-slate-300 truncate max-w-[140px] font-medium">{node.sni}</span>
+                    <div className="flex items-center justify-between text-[9px] text-[#86868b] dark:text-slate-500 truncate">
+                      <span>SNI: {node.sni}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Card Footer Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-black/[0.06] dark:border-slate-800/60 text-xs">
-                <span className="text-[10px] text-[#86868b] dark:text-slate-500 font-mono">
-                  ID: {node.id.slice(0, 10)}
+              <div className="flex items-center justify-between pt-1.5 border-t border-black/[0.04] dark:border-slate-800/50 text-xs">
+                <span className="text-[9px] text-[#86868b] dark:text-slate-500 font-mono">
+                  {node.country || 'UN'} • {node.id.slice(0, 8)}
                 </span>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(node, null, 2));
                       setCopiedId(node.id);
                       setTimeout(() => setCopiedId(null), 1500);
                     }}
-                    className="p-1.5 text-[#6e6e73] dark:text-slate-400 hover:text-[#1d1d1f] dark:hover:text-white hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-lg apple-press transition-colors"
+                    className="p-1 text-[#6e6e73] dark:text-slate-400 hover:text-[#1d1d1f] dark:hover:text-white hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-md apple-press transition-colors"
                     title="复制节点 JSON"
                   >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {isCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                   </button>
                   <button
                     onClick={() => handleDeleteNode(node.id)}
-                    className="p-1.5 text-[#86868b] hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-lg apple-press transition-colors"
+                    className="p-1 text-[#86868b] hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-md apple-press transition-colors"
                     title="删除节点"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
               </div>

@@ -214,8 +214,8 @@ export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
             </button>
           )}
 
-          {/* Delete Button (for custom rules) */}
-          {onDeleteNode && node.type === 'custom-rule' && (
+          {/* Delete Button (for rules and removable nodes) */}
+          {onDeleteNode && (node.type === 'rule' || node.type === 'custom-rule') && (
             <button
               type="button"
               onClick={(e) => {
@@ -223,7 +223,7 @@ export const CanvasNodeCard: React.FC<CanvasNodeCardProps> = ({
                 onDeleteNode(node.id);
               }}
               className="p-1 rounded-md text-[#86868b] hover:text-rose-500 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition-colors"
-              title="删除此规则节点"
+              title="删除此分流规则"
             >
               <Trash2 className="w-3 h-3" />
             </button>
