@@ -23,6 +23,7 @@ import {
 import { OpenClashSettings } from '../types/openclash';
 import { useTheme } from '../context/ThemeContext';
 import { APP_VERSION, FULL_VERSION, getRuntimeVersion } from '../version';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   activeTab: string;
@@ -57,8 +58,9 @@ export const Header: React.FC<HeaderProps> = ({
 
   const tabs = [
     { id: 'routing', label: '拓扑流程图', icon: Layers, badge: `${ruleCount}` },
+    { id: 'telemetry', label: '流量画像与审计', icon: Activity, badge: 'Neko' },
     { id: 'nodes', label: '节点订阅', icon: Radio, badge: `${nodeCount}` },
-    { id: 'debugger', label: '策略调试', icon: Activity, badge: '即时' },
+    { id: 'debugger', label: '策略调试', icon: ShieldCheck, badge: '即时' },
     { id: 'logs', label: '实时日志', icon: Terminal, badge: 'Live' },
     { id: 'config', label: '配置发布', icon: Router, badge: 'IPK' },
   ];
@@ -148,6 +150,9 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Quick Controls & Status */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* PWA Install Button */}
+            <PWAInstallButton compact className="hidden md:inline-flex" />
+
             {/* Theme Toggle Button (Apple Light/Dark/System) */}
             <button
               id="btn-theme-toggle"

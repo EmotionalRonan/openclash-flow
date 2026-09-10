@@ -22,6 +22,8 @@ import { NodeManager } from './components/NodeManager';
 import { RuleDebugger } from './components/RuleDebugger';
 import { LiveLogViewer } from './components/LiveLogViewer';
 import { ConfigGenerator } from './components/ConfigGenerator';
+import { NetworkTelemetryDashboard } from './components/NetworkTelemetryDashboard';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { 
   INITIAL_POLICY_GROUPS, 
   INITIAL_PROXIES, 
@@ -149,7 +151,17 @@ export default function App() {
           />
         )}
 
-        {/* TAB 2: Nodes & Subscriptions */}
+        {/* TAB 2: Telemetry, Rule Audit & Client Traffic (Neko Master Style) */}
+        {activeTab === 'telemetry' && (
+          <NetworkTelemetryDashboard
+            rules={rules}
+            policyGroups={policyGroups}
+            proxies={proxies}
+            onNavigateToRouting={() => setActiveTab('routing')}
+          />
+        )}
+
+        {/* TAB 3: Nodes & Subscriptions */}
         {activeTab === 'nodes' && (
           <NodeManager
             proxies={proxies}
@@ -279,6 +291,9 @@ export default function App() {
           onDismiss={() => setShowUpdateBanner(false)}
         />
       )}
+
+      {/* PWA Offline Connection Indicator */}
+      <OfflineIndicator />
 
     </div>
   );
