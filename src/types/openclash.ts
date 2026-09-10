@@ -1,4 +1,4 @@
-export type ProxyType = 'ss' | 'ssr' | 'vmess' | 'vless' | 'trojan' | 'hysteria' | 'hysteria2' | 'tuic' | 'wireguard' | 'http' | 'socks5';
+export type ProxyType = 'ss' | 'ssr' | 'vmess' | 'vless' | 'trojan' | 'hysteria' | 'hysteria2' | 'tuic' | 'wireguard' | 'http' | 'socks5' | 'direct' | 'reject';
 
 export interface ProxyNode {
   id: string;
@@ -41,10 +41,14 @@ export interface PolicyGroup {
   url?: string;
   interval?: number;
   tolerance?: number;
+  filter?: string;
+  includeAll?: boolean;
+  lazy?: boolean;
   isBuiltin?: boolean;
 }
 
 export type RuleType = 
+  | 'RULE-SET'
   | 'DOMAIN' 
   | 'DOMAIN-SUFFIX' 
   | 'DOMAIN-KEYWORD' 

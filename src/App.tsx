@@ -25,11 +25,13 @@ import { ConfigGenerator } from './components/ConfigGenerator';
 import { NetworkTelemetryDashboard } from './components/NetworkTelemetryDashboard';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { 
-  INITIAL_POLICY_GROUPS, 
-  INITIAL_PROXIES, 
-  INITIAL_TRAFFIC_RULES, 
   DEFAULT_OPENCLASH_SETTINGS 
 } from './data/presetRules';
+import { 
+  FALLBACK_ALL_POLICY_GROUPS, 
+  FALLBACK_ALL_PROXIES, 
+  FALLBACK_ALL_RULES 
+} from './data/fallbackAllConfig';
 import { 
   PolicyGroup, 
   ProxyNode, 
@@ -49,11 +51,60 @@ export default function App() {
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const [runtimeVer, setRuntimeVer] = useState<string>(getRuntimeVersion());
 
-  // Core State
+  // Core State (initialized with production fallback-all config or cached CRUD state)
   const [settings, setSettings] = useState<OpenClashSettings>(DEFAULT_OPENCLASH_SETTINGS);
-  const [policyGroups, setPolicyGroups] = useState<PolicyGroup[]>(INITIAL_POLICY_GROUPS);
-  const [proxies, setProxies] = useState<ProxyNode[]>(INITIAL_PROXIES);
-  const [rules, setRules] = useState<TrafficRule[]>(INITIAL_TRAFFIC_RULES);
+
+  const [policyGroups, setPolicyGroups] = useState<PolicyGroup[]>(() => {
+    try {
+      const saved = localStorage.getItem('openclash_policy_groups');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return FALLBACK_ALL_POLICY_GROUPS;
+  });
+
+  const [proxies, setProxies] = useState<ProxyNode[]>(() => {
+    try {
+      const saved = localStorage.getItem('openclash_proxies');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return FALLBACK_ALL_PROXIES;
+  });
+
+  const [rules, setRules] = useState<TrafficRule[]>(() => {
+    try {
+      const saved = localStorage.getItem('openclash_traffic_rules');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return FALLBACK_ALL_RULES;
+  });
+
+  // Sync state mutations to localStorage for persistent CRUD
+  useEffect(() => {
+    try {
+      localStorage.setItem('openclash_policy_groups', JSON.stringify(policyGroups));
+    } catch (e) {}
+  }, [policyGroups]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('openclash_proxies', JSON.stringify(proxies));
+    } catch (e) {}
+  }, [proxies]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('openclash_traffic_rules', JSON.stringify(rules));
+    } catch (e) {}
+  }, [rules]);
 
   // Auto-check GitHub updates on app start
   useEffect(() => {

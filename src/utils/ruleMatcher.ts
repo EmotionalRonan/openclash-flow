@@ -65,6 +65,45 @@ export function simulateTrafficRoute(
 
     const payload = rule.payload.toLowerCase();
 
+    // RULE-SET match (Clash / Mihomo rule-provider)
+    if (rule.type === 'RULE-SET') {
+      const setName = payload.split('/')[0].trim().toLowerCase();
+      let matched = false;
+
+      if (setName.includes('chatgpt') && /openai|chatgpt|oaistatic|sora/i.test(target)) matched = true;
+      else if (setName.includes('claude') && /claude|anthropic/i.test(target)) matched = true;
+      else if (setName.includes('gemini') && /gemini|bard|makersuite|deepmind/i.test(target)) matched = true;
+      else if (setName.includes('copilot') && /copilot|githubcopilot/i.test(target)) matched = true;
+      else if (setName.includes('perplexity') && /perplexity/i.test(target)) matched = true;
+      else if (setName.includes('grok') && /x\.ai|grok/i.test(target)) matched = true;
+      else if (setName.includes('groq') && /groq/i.test(target)) matched = true;
+      else if (setName.includes('github') && /github|ghcr|raw\.githubusercontent/i.test(target)) matched = true;
+      else if (setName.includes('youtube') && /youtube|ytimg|googlevideo|youtu\.be/i.test(target)) matched = true;
+      else if (setName.includes('netflix') && /netflix|nflxvideo|nflximg|nflxext/i.test(target)) matched = true;
+      else if (setName.includes('telegram') && /telegram|t\.me|tdesktop/i.test(target)) matched = true;
+      else if (setName.includes('spotify') && /spotify|scdn/i.test(target)) matched = true;
+      else if (setName.includes('steam') && /steam|valve|steamstatic/i.test(target)) matched = true;
+      else if (setName.includes('bilibili') && /bilibili|biliapi|hdslb/i.test(target)) matched = true;
+      else if (setName.includes('apple') && /apple|icloud|itunes|mzstatic/i.test(target)) matched = true;
+      else if (setName.includes('google') && /google|gmail|gstatic|android/i.test(target)) matched = true;
+      else if (setName.includes('microsoft') && /microsoft|azure|msn|windows|live\.com/i.test(target)) matched = true;
+      else if (setName.includes('block') && /adservice|telemetry|track|doubleclick|pagead/i.test(target)) matched = true;
+      else if (setName.includes('china') || setName.includes('direct')) {
+        if (target.endsWith('.cn') || /baidu|qq|aliyun|taobao|jd|163|weibo|zhihu|bilibili/i.test(target)) matched = true;
+      }
+
+      if (matched) {
+        matchedRule = rule;
+        evaluationSteps.push({
+          step: 2,
+          title: `规则集命中: RULE-SET, ${rule.payload}`,
+          detail: `目标 [${target}] 命中规则集 [${rule.payload}]，路由流向策略组: ${rule.targetGroup}`,
+          status: 'hit',
+        });
+        break;
+      }
+    }
+
     // DOMAIN-SUFFIX match
     if (rule.type === 'DOMAIN-SUFFIX') {
       if (isDomain && (target === payload || target.endsWith('.' + payload))) {

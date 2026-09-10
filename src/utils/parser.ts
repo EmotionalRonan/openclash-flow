@@ -355,6 +355,13 @@ export function generateOpenClashYaml(
 
   // 4. Proxies list
   config['proxies'] = proxies.map((p) => {
+    if (p.type === 'direct' || p.type === 'reject') {
+      return {
+        name: p.name,
+        type: p.type,
+      };
+    }
+
     const nodeObj: Record<string, any> = {
       name: p.name,
       type: p.type,
@@ -392,8 +399,11 @@ export function generateOpenClashYaml(
       type: g.type,
       proxies: g.proxies,
     };
+    if (g.filter) groupObj.filter = g.filter;
+    if (g.includeAll) groupObj['include-all'] = g.includeAll;
+    if (g.lazy !== undefined) groupObj.lazy = g.lazy;
     if (g.type === 'url-test' || g.type === 'fallback' || g.type === 'load-balance') {
-      groupObj.url = g.url || 'http://www.gstatic.com/generate_204';
+      groupObj.url = g.url || 'https://www.gstatic.com/generate_204';
       groupObj.interval = g.interval || 300;
       if (g.tolerance) groupObj.tolerance = g.tolerance;
     }
@@ -469,4 +479,187 @@ echo "==> Restarting OpenClash Service..."
 
 echo "==> Done! OpenClash is running in ${settings.runMode.toUpperCase()} mode."
 `;
+}
+
+export interface ParsedClashConfig {
+  proxies: ProxyNode[];
+  proxyGroups: PolicyGroup[];
+  rules: TrafficRule[];
+  settings?: Partial<OpenClashSettings>;
+}
+
+/**
+ * Parse full Clash / OpenClash YAML configuration string into structured entities
+ */
+export function parseFullClashYaml(yamlText: string): ParsedClashConfig {
+  const result: ParsedClashConfig = {
+    proxies: [],
+    proxyGroups: [],
+    rules: [],
+  };
+
+  if (!yamlText || !yamlText.trim()) return result;
+
+  try {
+    const doc = load(yamlText) as Record<string, any>;
+    if (!doc || typeof doc !== 'object') return result;
+
+    // 1. Parse Proxies
+    if (Array.isArray(doc.proxies)) {
+      doc.proxies.forEach((p: any, idx: number) => {
+        if (!p || typeof p !== 'object' || !p.name) return;
+        const name = String(p.name);
+        const { country, flag } = detectCountryFromNodeName(name);
+        const type = (p.type || 'ss').toLowerCase() as ProxyType;
+
+        const node: ProxyNode = {
+          id: `node-${Date.now()}-${idx}`,
+          name,
+          type,
+          server: String(p.server || '127.0.0.1'),
+          port: Number(p.port) || (type === 'direct' || type === 'reject' ? 0 : 443),
+          cipher: p.cipher,
+          password: p.password,
+          uuid: p.uuid,
+          tls: p.tls || p.security === 'tls' || p.security === 'reality',
+          sni: p.servername || p.sni,
+          flow: p.flow,
+          network: p.network,
+          latency: type === 'direct' ? 1 : type === 'reject' ? 0 : Math.floor(Math.random() * 80) + 20,
+          status: 'online',
+          country: type === 'direct' ? 'CN' : country,
+          flag: type === 'direct' ? '🇨🇳' : type === 'reject' ? '🛑' : flag,
+        };
+
+        if (p['ws-opts']?.path || p['ws-path']) {
+          node.wsPath = p['ws-opts']?.path || p['ws-path'];
+          node.wsHeaders = p['ws-opts']?.headers;
+        }
+
+        if (p['reality-opts']) {
+          node.realityOpts = {
+            publicKey: p['reality-opts']['public-key'],
+            shortId: p['reality-opts']['short-id'],
+          };
+        }
+
+        result.proxies.push(node);
+      });
+    }
+
+    // 2. Parse Proxy Groups
+    if (Array.isArray(doc['proxy-groups'])) {
+      doc['proxy-groups'].forEach((g: any, idx: number) => {
+        if (!g || typeof g !== 'object' || !g.name) return;
+        const name = String(g.name);
+        const rawType = (g.type || 'select').toLowerCase();
+        const type = (['select', 'url-test', 'fallback', 'load-balance', 'relay'].includes(rawType)
+          ? rawType
+          : 'select') as any;
+
+        const proxyList: string[] = Array.isArray(g.proxies) ? g.proxies.map(String) : [];
+
+        // Assign visual icon and gradient based on group purpose
+        let icon = 'Layers';
+        let color = 'from-slate-600 to-zinc-700';
+
+        if (/ai|chatgpt|claude|gemini|copilot|perplexity|grok|groq/i.test(name)) {
+          icon = 'Bot';
+          color = 'from-emerald-500 to-teal-600';
+        } else if (/media|youtube|netflix|disney|hbo|spotify|bilibili|tiktok/i.test(name)) {
+          icon = 'Film';
+          color = 'from-rose-500 to-pink-600';
+        } else if (/game|steam|epic|blizzard|playstation|nintendo/i.test(name)) {
+          icon = 'Gamepad2';
+          color = 'from-violet-500 to-purple-600';
+        } else if (/block|reject|ad/i.test(name)) {
+          icon = 'ShieldBan';
+          color = 'from-red-600 to-rose-700';
+        } else if (/auto|url-test/i.test(name) || type === 'url-test') {
+          icon = 'Zap';
+          color = 'from-amber-500 to-orange-600';
+        } else if (/故转|fallback/i.test(name) || type === 'fallback') {
+          icon = 'RefreshCw';
+          color = 'from-cyan-500 to-blue-600';
+        } else if (/直连|direct|国内/i.test(name)) {
+          icon = 'Globe';
+          color = 'from-emerald-500 to-teal-600';
+        }
+
+        const group: PolicyGroup = {
+          id: `grp-${Date.now()}-${idx}`,
+          name,
+          type,
+          icon,
+          color,
+          description: g.description || `${name} 分流策略组`,
+          proxies: proxyList,
+          url: g.url,
+          interval: Number(g.interval) || 300,
+          tolerance: Number(g.tolerance) || 50,
+          filter: g.filter,
+          includeAll: g['include-all'] || false,
+          lazy: g.lazy,
+        };
+
+        result.proxyGroups.push(group);
+      });
+    }
+
+    // 3. Parse Rules
+    if (Array.isArray(doc.rules)) {
+      doc.rules.forEach((rawRule: any, idx: number) => {
+        if (!rawRule || typeof rawRule !== 'string') return;
+        const parts = rawRule.split(',').map((s) => s.trim());
+        if (parts.length < 2) return;
+
+        const rawType = parts[0].toUpperCase();
+        let ruleType: any = 'DOMAIN-SUFFIX';
+        let payload = '';
+        let targetGroup = '';
+        let noResolve = false;
+
+        if (rawType === 'MATCH') {
+          ruleType = 'MATCH';
+          targetGroup = parts[1] || 'DIRECT';
+        } else {
+          ruleType = rawType;
+          payload = parts[1] || '';
+          targetGroup = parts[2] || 'DIRECT';
+          if (parts.includes('no-resolve')) {
+            noResolve = true;
+          }
+        }
+
+        result.rules.push({
+          id: `rule-${Date.now()}-${idx}`,
+          type: ruleType,
+          payload,
+          targetGroup,
+          noResolve,
+          enabled: true,
+          comment: payload || ruleType,
+        });
+      });
+    }
+
+    // 4. Parse Settings if available
+    result.settings = {
+      mixedPort: Number(doc['mixed-port']) || 7890,
+      redirPort: Number(doc['redir-port']) || 7892,
+      tproxyPort: Number(doc['tproxy-port']) || 7895,
+      allowLan: doc['allow-lan'] !== undefined ? Boolean(doc['allow-lan']) : true,
+      proxyMode: (['rule', 'global', 'direct'].includes(doc.mode) ? doc.mode : 'rule') as any,
+      logLevel: (['debug', 'info', 'warning', 'error', 'silent'].includes(doc['log-level'])
+        ? doc['log-level']
+        : 'info') as any,
+      secret: doc.secret || '',
+      tunEnable: doc.tun?.enable !== undefined ? Boolean(doc.tun?.enable) : false,
+      tunStack: doc.tun?.stack || 'gvisor',
+    };
+  } catch (err) {
+    console.error('Failed to parse full clash yaml:', err);
+  }
+
+  return result;
 }

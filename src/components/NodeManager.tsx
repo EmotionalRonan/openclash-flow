@@ -18,11 +18,16 @@ import {
   Search,
   ArrowUpDown,
   SlidersHorizontal,
-  LayoutGrid
+  LayoutGrid,
+  Edit3,
+  ExternalLink,
+  ShieldAlert,
+  Sliders
 } from 'lucide-react';
 import { ProxyNode, PolicyGroup } from '../types/openclash';
-import { parseSubscriptionInput, detectCountryFromNodeName } from '../utils/parser';
+import { parseSubscriptionInput, detectCountryFromNodeName, parseFullClashYaml } from '../utils/parser';
 import { generateSparklineSvgPath, generateSparklineAreaPath, formatSpeed } from '../utils/telemetryEngine';
+import { FALLBACK_ALL_PROXIES, FALLBACK_ALL_SOURCE_URL } from '../data/fallbackAllConfig';
 
 interface NodeManagerProps {
   proxies: ProxyNode[];
@@ -70,8 +75,19 @@ export const NodeManager: React.FC<NodeManagerProps> = ({
   const [newNodePassword, setNewNodePassword] = useState('');
   const [newNodeSni, setNewNodeSni] = useState('');
 
+  // Edit node state
+  const [editingNode, setEditingNode] = useState<ProxyNode | null>(null);
+  const [editNodeName, setEditNodeName] = useState('');
+  const [editNodeType, setEditNodeType] = useState<ProxyNode['type']>('vless');
+  const [editNodeServer, setEditNodeServer] = useState('');
+  const [editNodePort, setEditNodePort] = useState(443);
+  const [editNodePassword, setEditNodePassword] = useState('');
+  const [editNodeSni, setEditNodeSni] = useState('');
+  const [editNodeCipher, setEditNodeCipher] = useState('');
+  const [editNodeCountry, setEditNodeCountry] = useState('');
+
   // Countries present in current proxies
-  const countries = Array.from(new Set(proxies.map((p) => p.country || 'UN'))).filter(Boolean);
+  const countries: string[] = Array.from(new Set(proxies.map((p) => p.country || 'UN'))).filter(Boolean) as string[];
 
   // Filtered and Sorted Proxies
   const processedProxies = useMemo(() => {
@@ -115,18 +131,45 @@ export const NodeManager: React.FC<NodeManagerProps> = ({
       });
   }, [proxies, countryFilter, searchQuery, sortBy]);
 
-  // Handle Import
+  // Country Flag Map
+  const countryFlagMap: Record<string, string> = {
+    HK: '🇭🇰 香港',
+    TW: '🇹🇼 台湾',
+    JP: '🇯🇵 日本',
+    SG: '🇸🇬 新加坡',
+    US: '🇺🇸 美国',
+    UK: '🇬🇧 英国',
+    KR: '🇰🇷 韩国',
+    DE: '🇩🇪 德国',
+    DIRECT: '🇨🇳 直连',
+    REJECT: '🛑 拦截',
+    UN: '🌐 其它',
+  };
+
+  // Perform Batch Import
   const handlePerformImport = () => {
     if (!importInput.trim()) return;
+
     setIsImporting(true);
     setImportStatus(null);
 
     setTimeout(() => {
       try {
-        const parsedNodes = parseSubscriptionInput(importInput);
+        let parsedNodes: ProxyNode[] = [];
+
+        // Check if YAML or single lines
+        if (importInput.includes('proxies:') || importInput.includes('proxy-groups:')) {
+          const res = parseFullClashYaml(importInput);
+          parsedNodes = res.proxies;
+          if (res.proxyGroups.length > 0) {
+            setPolicyGroups(res.proxyGroups);
+          }
+        } else {
+          parsedNodes = parseSubscriptionInput(importInput);
+        }
+
         if (parsedNodes.length > 0) {
           setProxies((prev) => {
-            // deduplicate by server + port + name
             const existingKeys = new Set(prev.map((n) => `${n.server}:${n.port}:${n.name}`));
             const fresh = parsedNodes.filter((n) => !existingKeys.has(`${n.server}:${n.port}:${n.name}`));
             return [...prev, ...fresh];
@@ -146,7 +189,7 @@ export const NodeManager: React.FC<NodeManagerProps> = ({
 
           setImportStatus({
             count: parsedNodes.length,
-            message: `成功解析并导入 ${parsedNodes.length} 个节点！已自动关联至默认代理策略组。`,
+            message: `成功解析并导入 ${parsedNodes.length} 个节点！已自动关联至策略组。`,
           });
           setImportInput('');
         } else {
@@ -186,6 +229,9 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
     setTimeout(() => {
       setProxies((prev) =>
         prev.map((p) => {
+          if (p.type === 'direct') return { ...p, latency: 12, status: 'online' };
+          if (p.type === 'reject') return { ...p, latency: 0, status: 'online' };
+
           const jitter = Math.floor(Math.random() * 20) - 10;
           const base =
             p.country === 'HK'
@@ -220,30 +266,33 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
       regionMap[c].push(p.name);
     });
 
-    const regionGroupNames: Record<string, string> = {
-      HK: '🇭🇰 香港节点 (HK)',
-      JP: '🇯🇵 日本节点 (JP)',
-      TW: '🇹🇼 台湾节点 (TW)',
-      SG: '🇸🇬 新加坡节点 (SG)',
-      US: '🇺🇸 美国节点 (US)',
-      UK: '🇬🇧 英国节点 (UK)',
-      DE: '🇩🇪 德国节点 (DE)',
-      KR: '🇰🇷 韩国节点 (KR)',
+    const newGroups: PolicyGroup[] = [];
+    const regionNames: Record<string, string> = {
+      HK: '香港-自动',
+      TW: '台湾-自动',
+      JP: '日本-自动',
+      SG: '狮城-自动',
+      US: '美国-自动',
+      UK: '英国-自动',
+      KR: '韩国-自动',
+      DE: '德国-自动',
     };
 
-    const newGroups: PolicyGroup[] = [];
-
     Object.entries(regionMap).forEach(([code, nodeNames]) => {
-      const gName = regionGroupNames[code] || `🌐 ${code} 节点组`;
-      if (!policyGroups.some((g) => g.name === gName)) {
+      if (nodeNames.length === 0 || code === 'UN' || code === 'DIRECT' || code === 'REJECT') return;
+      const groupName = regionNames[code] || `${code}-自动`;
+      const exists = policyGroups.some((g) => g.name === groupName);
+
+      if (!exists) {
         newGroups.push({
-          id: `grp-region-${code.toLowerCase()}`,
-          name: gName,
+          id: `grp-auto-${code.toLowerCase()}-${Date.now()}`,
+          name: groupName,
           type: 'url-test',
-          description: `${code} 地区节点自动优选`,
-          proxies: nodeNames,
-          url: 'http://www.gstatic.com/generate_204',
+          description: `${countryFlagMap[code] || code} 地区节点自动延迟优选组`,
+          url: 'https://www.gstatic.com/generate_204',
           interval: 300,
+          tolerance: 50,
+          proxies: nodeNames,
         });
       }
     });
@@ -270,23 +319,41 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
     );
   };
 
+  // Clear All Nodes
+  const handleClearAllNodes = () => {
+    if (confirm('确定要清空全部代理节点吗？')) {
+      setProxies([]);
+    }
+  };
+
+  // Load Fallback-All Real Production Nodes
+  const handleLoadFallbackAllNodes = () => {
+    if (confirm(`是否载入 clash-fallback-all.yaml 的全量生产节点？将追加或刷新真实代理节点列表。`)) {
+      setProxies((prev) => {
+        const existingNames = new Set(prev.map((p) => p.name));
+        const fresh = FALLBACK_ALL_PROXIES.filter((p) => !existingNames.has(p.name));
+        return [...prev, ...fresh];
+      });
+    }
+  };
+
   // Add Manual Node
   const handleAddManualNode = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNodeName.trim() || !newNodeServer.trim()) return;
+    if (!newNodeName.trim()) return;
 
     const { country, flag } = detectCountryFromNodeName(newNodeName);
     const node: ProxyNode = {
       id: `manual-node-${Date.now()}`,
       name: newNodeName.trim(),
       type: newNodeType,
-      server: newNodeServer.trim(),
+      server: newNodeServer.trim() || (newNodeType === 'direct' || newNodeType === 'reject' ? 'localhost' : ''),
       port: newNodePort,
       password: newNodePassword.trim() || undefined,
       uuid: newNodeType === 'vless' || newNodeType === 'vmess' ? newNodePassword.trim() : undefined,
       sni: newNodeSni.trim() || undefined,
       tls: newNodePort === 443 || !!newNodeSni,
-      latency: Math.floor(Math.random() * 60) + 25,
+      latency: newNodeType === 'direct' ? 12 : newNodeType === 'reject' ? 0 : Math.floor(Math.random() * 60) + 25,
       status: 'online',
       country,
       flag,
@@ -300,6 +367,68 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
     setShowAddNodeModal(false);
   };
 
+  // Start Edit Node
+  const handleStartEditNode = (node: ProxyNode) => {
+    setEditingNode(node);
+    setEditNodeName(node.name);
+    setEditNodeType(node.type);
+    setEditNodeServer(node.server);
+    setEditNodePort(node.port);
+    setEditNodePassword(node.password || node.uuid || '');
+    setEditNodeSni(node.sni || '');
+    setEditNodeCipher(node.cipher || '');
+    setEditNodeCountry(node.country || '');
+  };
+
+  // Save Edit Node
+  const handleSaveEditNode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNode || !editNodeName.trim()) return;
+
+    const oldName = editingNode.name;
+    const newName = editNodeName.trim();
+    const { country, flag } = detectCountryFromNodeName(newName);
+
+    setProxies((prev) =>
+      prev.map((p) => {
+        if (p.id === editingNode.id) {
+          return {
+            ...p,
+            name: newName,
+            type: editNodeType,
+            server: editNodeServer.trim(),
+            port: editNodePort,
+            password: editNodePassword.trim() || undefined,
+            uuid: editNodeType === 'vless' || editNodeType === 'vmess' ? editNodePassword.trim() : undefined,
+            sni: editNodeSni.trim() || undefined,
+            cipher: editNodeCipher.trim() || undefined,
+            tls: editNodePort === 443 || !!editNodeSni,
+            country: editNodeCountry.trim() || country,
+            flag: flag || p.flag,
+          };
+        }
+        return p;
+      })
+    );
+
+    // If node name changed, cascade to policy groups
+    if (oldName !== newName) {
+      setPolicyGroups((prev) =>
+        prev.map((g) => {
+          if (g.proxies.includes(oldName)) {
+            return {
+              ...g,
+              proxies: g.proxies.map((name) => (name === oldName ? newName : name)),
+            };
+          }
+          return g;
+        })
+      );
+    }
+
+    setEditingNode(null);
+  };
+
   return (
     <div className="space-y-5">
       
@@ -310,15 +439,25 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
             <Radio className="w-5 h-5 text-indigo-500 dark:text-cyan-400" />
             节点与订阅管理
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-cyan-500/20 text-indigo-700 dark:text-cyan-300 font-medium border border-indigo-200 dark:border-cyan-500/30">
-              支持 VLESS / Hysteria2 / Trojan / VMess / SS
+              全协议支持 (增删改查)
             </span>
           </h2>
           <p className="text-xs text-[#6e6e73] dark:text-[#86868b] mt-1">
-            一键导入订阅链接、批量测速、自动按地区国家分类，并无缝注入分流策略组
+            支持一键导入、全员测速、在线编辑节点属性与自动生成地区优选组
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Preset Real Nodes Load */}
+          <button
+            onClick={handleLoadFallbackAllNodes}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-500/30 apple-press transition-colors"
+            title="载入 clash-fallback-all 生产真实节点"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>载入 Fallback-All 节点</span>
+          </button>
+
           {/* Latency Test Button */}
           <button
             id="btn-test-latencies"
@@ -338,7 +477,7 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
             title="根据节点名称自动创建 香港/日本/美国/新加坡 策略组"
           >
             <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-            <span>智能生成地区组</span>
+            <span>生成地区组</span>
           </button>
 
           {/* Manual Add Node */}
@@ -350,113 +489,97 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
             <span>添加单节点</span>
           </button>
 
-          {/* One-Click Import Button */}
+          {/* Import button */}
           <button
-            id="btn-open-import"
+            id="btn-open-import-modal"
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
           >
             <DownloadCloud className="w-4 h-4" />
-            <span>一键导入订阅/节点</span>
+            <span>批量导入</span>
           </button>
+
+          {/* Clear all */}
+          {proxies.length > 0 && (
+            <button
+              onClick={handleClearAllNodes}
+              className="p-2 text-[#86868b] hover:text-rose-500 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+              title="清空所有节点"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Search, Sort & Filter Strip */}
-      <div className="apple-glass rounded-2xl p-3 border border-black/[0.08] dark:border-white/[0.08] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shadow-sm">
+      {/* Filter, Search & Layout Control Toolbar */}
+      <div className="apple-glass rounded-2xl p-3 border border-black/[0.06] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-3 shadow-sm">
         
-        {/* Left: Search input & Country Filter */}
-        <div className="flex flex-wrap items-center gap-2 flex-1">
-          {/* Quick Search */}
-          <div className="relative min-w-[200px] max-w-xs flex-1">
-            <Search className="w-3.5 h-3.5 text-[#86868b] dark:text-[#71717a] absolute left-2.5 top-2.5" />
-            <input
-              type="text"
-              placeholder="搜索节点 (名称/IP/协议)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#1d1d1f] dark:text-[#f5f5f7] placeholder-[#86868b] focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-2 text-[10px] text-[#86868b] hover:text-black dark:hover:text-white"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+        {/* Left: Region Pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => setCountryFilter('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium apple-press transition-all ${
+              countryFilter === 'all'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
+            }`}
+          >
+            全部 ({proxies.length})
+          </button>
 
-          {/* Country Filter Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 text-xs">
-            <button
-              onClick={() => setCountryFilter('all')}
-              className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-all apple-press font-medium text-[11px] ${
-                countryFilter === 'all'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
-              }`}
-            >
-              全部 ({proxies.length})
-            </button>
-            {countries.map((c) => {
-              const count = proxies.filter((p) => p.country === c).length;
-              const flag = proxies.find((p) => p.country === c)?.flag || '🌐';
-              return (
-                <button
-                  key={c}
-                  onClick={() => setCountryFilter(c)}
-                  className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-all apple-press font-medium text-[11px] flex items-center gap-1 ${
-                    countryFilter === c
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.06] dark:border-white/[0.06]'
-                  }`}
-                >
-                  <span>{flag}</span>
-                  <span>{c}</span>
-                  <span className="text-[10px] opacity-70">({count})</span>
-                </button>
-              );
-            })}
-          </div>
+          {countries.map((code) => {
+            const count = proxies.filter((p) => (p.country || 'UN') === code).length;
+            return (
+              <button
+                key={code}
+                onClick={() => setCountryFilter(code)}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-medium apple-press transition-all ${
+                  countryFilter === code
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
+                }`}
+              >
+                {countryFlagMap[code] || code} ({count})
+              </button>
+            );
+          })}
         </div>
 
-        {/* Right: Sort Options & Density Switch */}
-        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/[0.04] px-2.5 py-1 rounded-xl border border-black/[0.06] dark:border-white/[0.06]">
-            <ArrowUpDown className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
-            <span className="text-[11px] text-[#6e6e73] dark:text-[#86868b] font-medium whitespace-nowrap">排序:</span>
+        {/* Right: Search, Sort & Density */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Search Box */}
+          <div className="relative min-w-[160px] sm:min-w-[200px]">
+            <Search className="w-3.5 h-3.5 text-[#86868b] absolute left-2.5 top-2.5" />
+            <input
+              type="text"
+              placeholder="搜索节点名称/IP/端口..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-2.5 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#1d1d1f] dark:text-[#f5f5f7] placeholder-[#86868b] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-1 bg-black/[0.04] dark:bg-white/[0.06] px-2 py-1 rounded-xl border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#6e6e73] dark:text-[#a1a1aa]">
+            <ArrowUpDown className="w-3 h-3 text-[#86868b]" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="bg-transparent text-xs text-[#1d1d1f] dark:text-[#f5f5f7] font-medium focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-[#1d1d1f] dark:text-[#f5f5f7] focus:outline-none cursor-pointer"
             >
-              <option value="default" className="dark:bg-[#1c1d24]">默认顺序 (订阅原序)</option>
-              <option value="latency-asc" className="dark:bg-[#1c1d24]">⚡ 延迟由低到高 (最快)</option>
-              <option value="latency-desc" className="dark:bg-[#1c1d24]">⏳ 延迟由高到低</option>
-              <option value="name-asc" className="dark:bg-[#1c1d24]">🔤 节点名称 (A → Z)</option>
-              <option value="name-desc" className="dark:bg-[#1c1d24]">🔤 节点名称 (Z → A)</option>
-              <option value="country" className="dark:bg-[#1c1d24]">🌐 国家/地区</option>
-              <option value="type" className="dark:bg-[#1c1d24]">🛡️ 协议类型 (VLESS/Hy2...)</option>
-              <option value="port" className="dark:bg-[#1c1d24]">🔢 端口号</option>
+              <option value="default">默认排序</option>
+              <option value="latency-asc">延迟: 从低到高</option>
+              <option value="latency-desc">延迟: 从高到低</option>
+              <option value="name-asc">名称: A → Z</option>
+              <option value="name-desc">名称: Z → A</option>
+              <option value="type">按协议类型</option>
+              <option value="country">按国家地区</option>
+              <option value="port">按端口号</option>
             </select>
           </div>
 
-          {/* Density Switch */}
-          <button
-            onClick={() => setIsCompact(!isCompact)}
-            className={`px-2.5 py-1 rounded-xl text-xs font-medium border border-black/[0.06] dark:border-white/[0.06] flex items-center gap-1 transition-colors apple-press ${
-              isCompact
-                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30'
-                : 'bg-slate-100 dark:bg-white/[0.04] text-[#6e6e73] dark:text-[#a1a1aa]'
-            }`}
-            title={isCompact ? '切换为标准大卡片' : '切换为紧凑小卡片'}
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span className="text-[11px]">{isCompact ? '紧凑小卡' : '标准卡片'}</span>
-          </button>
-
-          {/* Time Window Switch for Sparkline */}
+          {/* Time Window for Sparkline */}
           <div className="flex items-center p-0.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-xl border border-black/[0.06] dark:border-white/[0.06]">
             {(['30m', '1h', '24h'] as const).map((tw) => (
               <button
@@ -621,6 +744,15 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                 </span>
 
                 <div className="flex items-center gap-1">
+                  {/* Edit Node Button */}
+                  <button
+                    onClick={() => handleStartEditNode(node)}
+                    className="p-1 text-[#6e6e73] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-md apple-press transition-colors"
+                    title="编辑节点配置"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </button>
+
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(node, null, 2));
@@ -646,6 +778,132 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           );
         })}
       </div>
+
+      {/* Edit Node Modal */}
+      {editingNode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <form
+            onSubmit={handleSaveEditNode}
+            className="apple-glass rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-black/[0.1] dark:border-white/[0.12] animate-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+              <h3 className="text-base font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                编辑代理节点: {editingNode.name}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingNode(null)}
+                className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.06] hover:bg-black/[0.1] dark:hover:bg-white/[0.12] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white flex items-center justify-center text-xs apple-press transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">节点名称 (可包含国旗 emoji)</label>
+                <input
+                  type="text"
+                  required
+                  value={editNodeName}
+                  onChange={(e) => setEditNodeName(e.target.value)}
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">协议类型</label>
+                  <select
+                    value={editNodeType}
+                    onChange={(e) => setEditNodeType(e.target.value as any)}
+                    className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] focus:border-indigo-500 focus:outline-none"
+                  >
+                    <option value="vless">VLESS</option>
+                    <option value="hysteria2">Hysteria 2</option>
+                    <option value="trojan">Trojan</option>
+                    <option value="vmess">VMess</option>
+                    <option value="ss">Shadowsocks</option>
+                    <option value="tuic">TUIC</option>
+                    <option value="direct">DIRECT (直连)</option>
+                    <option value="reject">REJECT (拒绝)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">端口 (Port)</label>
+                  <input
+                    type="number"
+                    required
+                    value={editNodePort}
+                    onChange={(e) => setEditNodePort(parseInt(e.target.value, 10) || 443)}
+                    className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">服务器域名 / IP</label>
+                <input
+                  type="text"
+                  required
+                  value={editNodeServer}
+                  onChange={(e) => setEditNodeServer(e.target.value)}
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">密码 / UUID / Token</label>
+                <input
+                  type="text"
+                  value={editNodePassword}
+                  onChange={(e) => setEditNodePassword(e.target.value)}
+                  className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">SNI / 伪装域名</label>
+                  <input
+                    type="text"
+                    value={editNodeSni}
+                    onChange={(e) => setEditNodeSni(e.target.value)}
+                    className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[#6e6e73] dark:text-[#a1a1aa] font-medium">地区国家代码 (如 HK, JP, US)</label>
+                  <input
+                    type="text"
+                    value={editNodeCountry}
+                    onChange={(e) => setEditNodeCountry(e.target.value.toUpperCase())}
+                    className="w-full bg-slate-100 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-black/[0.06] dark:border-white/[0.06]">
+              <button
+                type="button"
+                onClick={() => setEditingNode(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-medium border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
+              >
+                保存节点
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* One-Click Import Modal */}
       {showImportModal && (
@@ -774,6 +1032,8 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
                     <option value="vmess">VMess</option>
                     <option value="ss">Shadowsocks</option>
                     <option value="tuic">TUIC</option>
+                    <option value="direct">DIRECT (直连)</option>
+                    <option value="reject">REJECT (拒绝)</option>
                   </select>
                 </div>
 
