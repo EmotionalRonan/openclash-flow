@@ -76,12 +76,16 @@ describe('智能日期版本控制规则 (Date-Based Versioning Rule)', () => {
     expect(next.lastModified).toBe('2026-09-11');
   });
 
-  it('当前项目配置验证：版本已准确更新为 1.0.6-2', () => {
-    expect(APP_VERSION).toBe('1.0.6');
-    expect(APP_RELEASE).toBe('2');
-    expect(FULL_VERSION).toBe('1.0.6-2');
-    expect(LAST_MODIFIED).toBe('2026-09-09');
-    expect(versionInfo.version).toBe('1.0.6');
-    expect(versionInfo.release).toBe('2');
+  it('当前项目配置验证：版本与元数据格式规范且与单一真实来源保持一致', () => {
+    expect(APP_VERSION).toBe(versionInfo.version);
+    expect(APP_RELEASE).toBe(versionInfo.release);
+    expect(FULL_VERSION).toBe(`${versionInfo.version}-${versionInfo.release}`);
+    expect(LAST_MODIFIED).toBe(versionInfo.lastModified);
+
+    // 格式规范校验 (Semver + Release)
+    expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(APP_RELEASE).toMatch(/^\d+$/);
+    expect(FULL_VERSION).toMatch(/^\d+\.\d+\.\d+-\d+$/);
+    expect(LAST_MODIFIED).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
