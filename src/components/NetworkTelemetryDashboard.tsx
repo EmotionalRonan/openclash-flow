@@ -206,13 +206,13 @@ export const NetworkTelemetryDashboard: React.FC<NetworkTelemetryDashboardProps>
     <div className="space-y-4 max-w-7xl mx-auto">
       
       {/* TOP CONTROL BAR: Apple HIG segmented controls & window selector */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-white/70 dark:bg-[#12131a]/70 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] p-3 rounded-2xl shadow-xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white/70 dark:bg-[#12131a]/70 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] p-3 rounded-2xl shadow-xs">
         
         {/* Navigation Segments */}
-        <div className="flex items-center gap-1.5 p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-xl">
+        <div className="flex items-center gap-1.5 p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-xl overflow-x-auto max-w-full scrollbar-none shrink-0">
           <button
             onClick={() => setActiveSubTab('overview')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all apple-press ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all apple-press shrink-0 whitespace-nowrap ${
               activeSubTab === 'overview'
                 ? 'bg-white dark:bg-[#1e1f29] text-[#1d1d1f] dark:text-white shadow-xs'
                 : 'text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
@@ -223,7 +223,7 @@ export const NetworkTelemetryDashboard: React.FC<NetworkTelemetryDashboardProps>
           </button>
           <button
             onClick={() => setActiveSubTab('clients')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all apple-press ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all apple-press shrink-0 whitespace-nowrap ${
               activeSubTab === 'clients'
                 ? 'bg-white dark:bg-[#1e1f29] text-[#1d1d1f] dark:text-white shadow-xs'
                 : 'text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
@@ -234,7 +234,7 @@ export const NetworkTelemetryDashboard: React.FC<NetworkTelemetryDashboardProps>
           </button>
           <button
             onClick={() => setActiveSubTab('audit')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all apple-press ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all apple-press shrink-0 whitespace-nowrap ${
               activeSubTab === 'audit'
                 ? 'bg-white dark:bg-[#1e1f29] text-[#1d1d1f] dark:text-white shadow-xs'
                 : 'text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
@@ -251,13 +251,13 @@ export const NetworkTelemetryDashboard: React.FC<NetworkTelemetryDashboardProps>
         </div>
 
         {/* Right side: Time Window & Heartbeat badge */}
-        <div className="flex items-center gap-2 self-end md:self-auto">
-          <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">
+        <div className="flex flex-wrap items-center justify-between md:justify-end gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
             <span>实时采集 (WebSocket)</span>
           </div>
 
-          <div className="flex items-center p-0.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-lg text-xs">
+          <div className="flex items-center p-0.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-lg text-xs shrink-0">
             {(['live', '30m', '1h', '24h'] as TimeWindow[]).map((tw) => (
               <button
                 key={tw}

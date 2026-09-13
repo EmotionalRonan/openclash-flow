@@ -18,7 +18,8 @@ import {
   Monitor,
   RefreshCw,
   ArrowDownCircle,
-  Package
+  Package,
+  MoreVertical
 } from 'lucide-react';
 import { OpenClashSettings } from '../types/openclash';
 import { useTheme } from '../context/ThemeContext';
@@ -53,8 +54,22 @@ export const Header: React.FC<HeaderProps> = ({
   latestVersion,
 }) => {
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = React.useState(false);
   const { themeMode, resolvedTheme, setThemeMode, toggleTheme } = useTheme();
   const runtimeVer = getRuntimeVersion();
+  const moreMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Close more menu when clicking outside
+  React.useEffect(() => {
+    if (!showMobileMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMobileMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileMoreMenu]);
 
   const tabs = [
     { id: 'routing', label: '拓扑流程图', icon: Layers, badge: `${ruleCount}` },
@@ -66,21 +81,21 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/[0.08] dark:border-white/[0.08] bg-white/80 dark:bg-[#0c0d13]/80 backdrop-blur-2xl transition-colors">
-      <div className="w-full px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-15 sm:h-16 gap-3">
+    <header className="sticky top-0 z-40 border-b border-black/[0.08] dark:border-white/[0.08] bg-white/85 dark:bg-[#0c0d13]/85 backdrop-blur-2xl transition-colors w-full overflow-x-clip">
+      <div className="w-full px-2.5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-1.5 sm:gap-3 w-full min-w-0">
           
           {/* Logo & Brand (Apple SF Squircle) */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[11px] bg-black/[0.04] dark:bg-[#181922] border border-black/[0.08] dark:border-white/[0.12] flex items-center justify-center shadow-sm shrink-0 transition-colors">
-              <Network className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-[10px] sm:rounded-[11px] bg-black/[0.04] dark:bg-[#181922] border border-black/[0.08] dark:border-white/[0.12] flex items-center justify-center shadow-sm shrink-0 transition-colors">
+              <Network className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-semibold text-sm sm:text-base text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight whitespace-nowrap">
+            <div className="min-w-0 flex flex-col justify-center">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap">
+                <span className="font-semibold text-xs sm:text-sm md:text-base text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight whitespace-nowrap">
                   OpenClash Flow
                 </span>
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] border border-black/[0.06] dark:border-white/[0.08] tracking-wider uppercase shrink-0">
+                <span className="hidden md:inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] border border-black/[0.06] dark:border-white/[0.08] tracking-wider uppercase shrink-0">
                   ImmortalWRT
                 </span>
                 <button
@@ -93,22 +108,23 @@ export const Header: React.FC<HeaderProps> = ({
                 {hasUpdate && (
                   <button
                     onClick={onOpenUpdateModal}
-                    className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0 font-mono apple-press transition-all animate-pulse shadow-xs"
+                    className="flex items-center gap-1 text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0 font-mono apple-press transition-all animate-pulse shadow-xs"
                     title={`检测到 GitHub 新版本 v${latestVersion}，点击在界面直接更新`}
                   >
                     <Sparkles className="w-2.5 h-2.5 text-amber-500" />
-                    <span>发现新版 v{latestVersion}</span>
+                    <span className="hidden sm:inline">发现新版 v{latestVersion}</span>
+                    <span className="sm:hidden">v{latestVersion}</span>
                   </button>
                 )}
               </div>
-              <p className="text-[11px] text-[#86868b] hidden xl:block tracking-tight truncate">
+              <p className="text-[11px] text-[#86868b] hidden 2xl:block tracking-tight truncate">
                 可视化分流与智能配置引擎
               </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs (Apple Segmented Control) */}
-          <nav className="hidden lg:flex items-center p-1 rounded-2xl bg-black/[0.04] dark:bg-[#16171f] border border-black/[0.06] dark:border-white/[0.08] shadow-[inset_0_1px_1px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_1px_rgba(0,0,0,0.2)] shrink-0 transition-colors">
+          {/* Desktop Navigation Tabs (Apple Segmented Control on xl+ screens) */}
+          <nav className="hidden xl:flex items-center p-1 rounded-2xl bg-black/[0.04] dark:bg-[#16171f] border border-black/[0.06] dark:border-white/[0.08] shadow-[inset_0_1px_1px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_1px_rgba(0,0,0,0.2)] shrink-0 transition-colors">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -149,70 +165,9 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Quick Controls & Status */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* PWA Install Button */}
-            <PWAInstallButton compact className="hidden md:inline-flex" />
-
-            {/* Theme Toggle Button (Apple Light/Dark/System) */}
-            <button
-              id="btn-theme-toggle"
-              onClick={toggleTheme}
-              className="p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shadow-sm flex items-center justify-center shrink-0"
-              title={`当前模式: ${resolvedTheme === 'dark' ? '深色模式' : '浅色模式'} (点击切换)`}
-              aria-label="切换亮暗色模式"
-            >
-              {resolvedTheme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-indigo-600" />
-              )}
-            </button>
-
-            {/* GitHub Update Detection button */}
-            {onOpenUpdateModal && (
-              <button
-                id="btn-github-update"
-                onClick={onOpenUpdateModal}
-                className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium border transition-all apple-press shadow-sm shrink-0 whitespace-nowrap ${
-                  hasUpdate
-                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600 shadow-indigo-600/25 ring-2 ring-indigo-500/20'
-                    : 'bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] border-black/[0.08] dark:border-white/[0.08]'
-                }`}
-                title={hasUpdate ? `GitHub 发现新版本 v${latestVersion}，点击在界面直接更新` : 'GitHub 更新检测与一键热升级'}
-              >
-                <ArrowDownCircle className={`w-3.5 h-3.5 ${hasUpdate ? 'animate-bounce text-white' : 'text-indigo-600 dark:text-indigo-400'}`} />
-                <span className="hidden sm:inline whitespace-nowrap">
-                  {hasUpdate ? `更新 v${latestVersion}` : '更新检测'}
-                </span>
-                {hasUpdate && (
-                  <span className="w-2 h-2 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5 ring-2 ring-white dark:ring-[#14151c]" />
-                )}
-              </button>
-            )}
-
-            {/* Case Study Guide button */}
-            {onOpenCaseStudy && (
-              <button
-                id="btn-case-study-modal"
-                onClick={onOpenCaseStudy}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-500/[0.12] hover:bg-amber-500/[0.18] text-amber-700 dark:text-amber-300 border border-amber-500/25 transition-all apple-press shadow-sm shrink-0 whitespace-nowrap"
-                title="查看分流实战案例与操作步骤指南"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">案例演示</span>
-              </button>
-            )}
-
-            {/* Architecture diagram button */}
-            <button
-              id="btn-architecture-modal"
-              onClick={onOpenArchitecture}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0 whitespace-nowrap"
-              title="查看系统架构与前后端交互设计"
-            >
-              <Terminal className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-              <span className="whitespace-nowrap">架构</span>
-            </button>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* PWA Install Button (Desktop & Tablet) */}
+            <PWAInstallButton compact className="hidden lg:inline-flex" />
 
             {/* Run mode selector (Apple segmented pill on 2xl screens) */}
             <div className="hidden 2xl:flex items-center bg-black/[0.04] dark:bg-[#16171f] rounded-xl border border-black/[0.06] dark:border-white/[0.08] p-0.5 text-xs transition-colors shrink-0">
@@ -231,7 +186,53 @@ export const Header: React.FC<HeaderProps> = ({
               ))}
             </div>
 
-            {/* Force Reload / Cache Busting button */}
+            {/* Case Study Guide button (>= sm screens) */}
+            {onOpenCaseStudy && (
+              <button
+                id="btn-case-study-modal"
+                onClick={onOpenCaseStudy}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-amber-500/[0.12] hover:bg-amber-500/[0.18] text-amber-700 dark:text-amber-300 border border-amber-500/25 transition-all apple-press shadow-sm shrink-0 whitespace-nowrap"
+                title="查看分流实战案例与操作步骤指南"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="hidden md:inline whitespace-nowrap">案例演示</span>
+              </button>
+            )}
+
+            {/* Architecture diagram button (>= md screens) */}
+            <button
+              id="btn-architecture-modal"
+              onClick={onOpenArchitecture}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0 whitespace-nowrap"
+              title="查看系统架构与前后端交互设计"
+            >
+              <Terminal className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+              <span className="whitespace-nowrap">架构</span>
+            </button>
+
+            {/* GitHub Update Detection button (>= sm screens or when update available) */}
+            {onOpenUpdateModal && (
+              <button
+                id="btn-github-update"
+                onClick={onOpenUpdateModal}
+                className={`relative flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all apple-press shadow-sm shrink-0 whitespace-nowrap ${
+                  hasUpdate
+                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600 shadow-indigo-600/25 ring-2 ring-indigo-500/20'
+                    : 'hidden sm:flex bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] border-black/[0.08] dark:border-white/[0.08]'
+                }`}
+                title={hasUpdate ? `GitHub 发现新版本 v${latestVersion}，点击在界面直接更新` : 'GitHub 更新检测与一键热升级'}
+              >
+                <ArrowDownCircle className={`w-3.5 h-3.5 ${hasUpdate ? 'animate-bounce text-white' : 'text-indigo-600 dark:text-indigo-400'}`} />
+                <span className="hidden lg:inline whitespace-nowrap">
+                  {hasUpdate ? `更新 v${latestVersion}` : '更新检测'}
+                </span>
+                {hasUpdate && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5 ring-2 ring-white dark:ring-[#14151c]" />
+                )}
+              </button>
+            )}
+
+            {/* Force Reload / Cache Busting button (>= sm screens) */}
             <button
               id="btn-force-reload"
               onClick={() => {
@@ -249,35 +250,149 @@ export const Header: React.FC<HeaderProps> = ({
                 url.searchParams.set('_t', Date.now().toString());
                 window.location.href = url.toString();
               }}
-              className="p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0"
+              className="hidden sm:flex p-1.5 sm:p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0"
               title="清除本地缓存并强制刷新最新界面 (Ctrl+F5)"
               aria-label="强制刷新最新界面"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+
+            {/* Theme Toggle Button (Apple Light/Dark/System) */}
+            <button
+              id="btn-theme-toggle"
+              onClick={toggleTheme}
+              className="p-1.5 sm:p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shadow-sm flex items-center justify-center shrink-0"
+              title={`当前模式: ${resolvedTheme === 'dark' ? '深色模式' : '浅色模式'} (点击切换)`}
+              aria-label="切换亮暗色模式"
+            >
+              {resolvedTheme === 'dark' ? (
+                <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
+              )}
             </button>
 
             {/* Settings button */}
             <button
               id="btn-open-settings"
               onClick={() => setShowSettingsModal(true)}
-              className="p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0"
+              className="p-1.5 sm:p-2 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0"
               title="OpenClash 核心参数设置"
+              aria-label="OpenClash 设置"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             {/* Router status indicator (Apple status capsule) */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.1] border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs shrink-0 whitespace-nowrap">
+            <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-emerald-500/[0.1] border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs shrink-0 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
-              <span className="font-mono text-[11px] hidden md:inline">{settings.routerHost}</span>
-              <span className="text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">{settings.runMode.toUpperCase()}</span>
+              <span className="font-mono text-[10px] sm:text-[11px] hidden md:inline">{settings.routerHost}</span>
+              <span className="text-[9px] sm:text-[10px] font-semibold tracking-wider text-emerald-600 dark:text-emerald-400">
+                {settings.runMode.toUpperCase()}
+              </span>
+            </div>
+
+            {/* Mobile Dropdown Menu for secondary tools on < md screens */}
+            <div className="relative md:hidden shrink-0" ref={moreMenuRef}>
+              <button
+                id="btn-header-mobile-menu"
+                onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
+                className="p-1.5 rounded-xl bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#a1a1aa] dark:hover:text-[#f5f5f7] border border-black/[0.08] dark:border-white/[0.08] transition-all apple-press shrink-0"
+                title="更多工具与选项"
+                aria-label="更多工具"
+              >
+                <MoreVertical className="w-3.5 h-3.5" />
+              </button>
+
+              {showMobileMoreMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-white/95 dark:bg-[#14151e]/95 backdrop-blur-2xl border border-black/[0.1] dark:border-white/[0.12] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1 text-xs">
+                  {onOpenCaseStudy && (
+                    <button
+                      onClick={() => {
+                        setShowMobileMoreMenu(false);
+                        onOpenCaseStudy();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-[#1d1d1f] dark:text-[#f5f5f7] transition-colors"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                      <span>实战案例演示</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setShowMobileMoreMenu(false);
+                      onOpenArchitecture();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-[#1d1d1f] dark:text-[#f5f5f7] transition-colors"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-cyan-500" />
+                    <span>系统架构流程</span>
+                  </button>
+
+                  {onOpenUpdateModal && (
+                    <button
+                      onClick={() => {
+                        setShowMobileMoreMenu(false);
+                        onOpenUpdateModal();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-[#1d1d1f] dark:text-[#f5f5f7] transition-colors"
+                    >
+                      <ArrowDownCircle className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>{hasUpdate ? `发现新版 v${latestVersion}` : 'GitHub 更新检测'}</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setShowMobileMoreMenu(false);
+                      try {
+                        sessionStorage.clear();
+                        if ('caches' in window) {
+                          caches.keys().then((names) => {
+                            names.forEach((name) => caches.delete(name));
+                          });
+                        }
+                      } catch (e) {}
+                      const url = new URL(window.location.href);
+                      url.searchParams.set('_t', Date.now().toString());
+                      window.location.href = url.toString();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left hover:bg-black/[0.05] dark:hover:bg-white/[0.08] text-[#1d1d1f] dark:text-[#f5f5f7] transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                    <span>清空缓存并刷新</span>
+                  </button>
+
+                  <div className="pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
+                    <div className="px-3 py-1 text-[10px] text-[#86868b] font-medium">路由分流模式</div>
+                    {(['rule', 'global', 'direct'] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          setSettings((s) => ({ ...s, proxyMode: m }));
+                          setShowMobileMoreMenu(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-left transition-colors ${
+                          settings.proxyMode === m
+                            ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-semibold'
+                            : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[#6e6e73] dark:text-[#86868b]'
+                        }`}
+                      >
+                        <span>{m === 'rule' ? '规则分流 (Rule)' : m === 'global' ? '全局代理 (Global)' : '直连模式 (Direct)'}</span>
+                        {settings.proxyMode === m && <Check className="w-3 h-3 text-indigo-500" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Navigation Tabs Bar for Tablets and Mobile (< lg screens) */}
-        <div className="flex lg:hidden overflow-x-auto gap-1.5 py-2.5 border-t border-black/[0.06] dark:border-white/[0.06] scrollbar-none items-center">
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-black/[0.03] dark:bg-[#14151e] border border-black/[0.06] dark:border-white/[0.08] w-full min-w-max">
+        {/* Navigation Tabs Bar for Tablets and Mobile (< xl screens) */}
+        <div className="flex xl:hidden overflow-x-auto gap-1.5 py-2 border-t border-black/[0.06] dark:border-white/[0.06] scrollbar-none items-center w-full">
+          <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-2xl bg-black/[0.03] dark:bg-[#14151e] border border-black/[0.06] dark:border-white/[0.08] min-w-max mx-auto sm:mx-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -285,7 +400,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all apple-press shrink-0 whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all apple-press shrink-0 whitespace-nowrap ${
                     isActive
                       ? 'bg-white dark:bg-[#272832] text-[#1d1d1f] dark:text-white border border-black/[0.08] dark:border-white/[0.16] shadow-sm font-semibold'
                       : 'text-[#6e6e73] dark:text-[#8e8e93] hover:text-[#1d1d1f] dark:hover:text-[#f5f5f7]'

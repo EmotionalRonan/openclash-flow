@@ -46,12 +46,12 @@ export const StepSimulatorBar: React.FC<StepSimulatorBarProps> = ({
       {/* Top row: Target Input & Action Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/[0.12] border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shrink-0">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/[0.12] border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shrink-0 self-start sm:self-auto">
             <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>单步仿真回放</span>
           </div>
 
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-[140px] sm:min-w-[200px]">
             <input
               type="text"
               value={simState.targetQuery}

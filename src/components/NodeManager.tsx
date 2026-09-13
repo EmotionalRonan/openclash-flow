@@ -447,15 +447,16 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Preset Real Nodes Load */}
           <button
             onClick={handleLoadFallbackAllNodes}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-500/30 apple-press transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-500/30 apple-press transition-colors shrink-0"
             title="载入 clash-fallback-all 生产真实节点"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>载入 Fallback-All 节点</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">载入 Fallback-All 节点</span>
+            <span className="sm:hidden whitespace-nowrap">载入预设</span>
           </button>
 
           {/* Latency Test Button */}
@@ -463,9 +464,9 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
             id="btn-test-latencies"
             disabled={isTestingLatency || proxies.length === 0}
             onClick={handleTestAllLatencies}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors disabled:opacity-50 shrink-0 whitespace-nowrap"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-amber-500 dark:text-amber-400 ${isTestingLatency ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0 ${isTestingLatency ? 'animate-spin' : ''}`} />
             <span>{isTestingLatency ? '测速中...' : '全员测速'}</span>
           </button>
 
@@ -473,19 +474,19 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           <button
             id="btn-auto-group"
             onClick={handleAutoGroupByRegion}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200 dark:border-indigo-500/30 apple-press transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200 dark:border-indigo-500/30 apple-press transition-colors shrink-0 whitespace-nowrap"
             title="根据节点名称自动创建 香港/日本/美国/新加坡 策略组"
           >
-            <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <span>生成地区组</span>
           </button>
 
           {/* Manual Add Node */}
           <button
             onClick={() => setShowAddNodeModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors shrink-0 whitespace-nowrap"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             <span>添加单节点</span>
           </button>
 
@@ -493,9 +494,9 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           <button
             id="btn-open-import-modal"
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors shrink-0 whitespace-nowrap"
           >
-            <DownloadCloud className="w-4 h-4" />
+            <DownloadCloud className="w-4 h-4 shrink-0" />
             <span>批量导入</span>
           </button>
 
@@ -503,7 +504,7 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           {proxies.length > 0 && (
             <button
               onClick={handleClearAllNodes}
-              className="p-2 text-[#86868b] hover:text-rose-500 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+              className="p-2 text-[#86868b] hover:text-rose-500 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors shrink-0"
               title="清空所有节点"
             >
               <Trash2 className="w-4 h-4" />
@@ -513,13 +514,13 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
       </div>
 
       {/* Filter, Search & Layout Control Toolbar */}
-      <div className="apple-glass rounded-2xl p-3 border border-black/[0.06] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-3 shadow-sm">
+      <div className="apple-glass rounded-2xl p-3 border border-black/[0.06] dark:border-white/[0.06] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-sm">
         
         {/* Left: Region Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto max-w-full scrollbar-none pb-1 md:pb-0">
           <button
             onClick={() => setCountryFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium apple-press transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium apple-press transition-all shrink-0 whitespace-nowrap ${
               countryFilter === 'all'
                 ? 'bg-indigo-600 text-white shadow-xs'
                 : 'bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
@@ -534,7 +535,7 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
               <button
                 key={code}
                 onClick={() => setCountryFilter(code)}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-medium apple-press transition-all ${
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-medium apple-press transition-all shrink-0 whitespace-nowrap ${
                   countryFilter === code
                     ? 'bg-indigo-600 text-white shadow-xs'
                     : 'bg-black/[0.04] dark:bg-white/[0.06] text-[#6e6e73] dark:text-[#a1a1aa] hover:text-[#1d1d1f] dark:hover:text-white'
@@ -547,9 +548,9 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
         </div>
 
         {/* Right: Search, Sort & Density */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
           {/* Search Box */}
-          <div className="relative min-w-[160px] sm:min-w-[200px]">
+          <div className="relative min-w-[140px] flex-1 sm:flex-initial sm:min-w-[180px]">
             <Search className="w-3.5 h-3.5 text-[#86868b] absolute left-2.5 top-2.5" />
             <input
               type="text"
@@ -561,7 +562,7 @@ ss://YWVzLTI1Ni1nY206c3MyMDIyLXBhc3N3b3JkLWtleS1sb25AdWswMS5sb25kb24tdGVsZWNvbS5
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-1 bg-black/[0.04] dark:bg-white/[0.06] px-2 py-1 rounded-xl border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#6e6e73] dark:text-[#a1a1aa]">
+          <div className="flex items-center gap-1 bg-black/[0.04] dark:bg-white/[0.06] px-2 py-1 rounded-xl border border-black/[0.06] dark:border-white/[0.06] text-xs text-[#6e6e73] dark:text-[#a1a1aa] shrink-0">
             <ArrowUpDown className="w-3 h-3 text-[#86868b]" />
             <select
               value={sortBy}

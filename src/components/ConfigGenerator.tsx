@@ -238,22 +238,22 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
         </div>
 
         {/* Format Switcher */}
-        <div className="flex bg-slate-100/90 dark:bg-slate-950 p-1 rounded-2xl border border-black/[0.06] dark:border-slate-800 text-xs self-start md:self-auto gap-1">
+        <div className="flex overflow-x-auto max-w-full scrollbar-none bg-slate-100/90 dark:bg-slate-950 p-1 rounded-2xl border border-black/[0.06] dark:border-slate-800 text-xs self-start md:self-auto gap-1 shrink-0">
           <button
             onClick={() => setActiveTab('ipk')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium transition-all apple-press shrink-0 whitespace-nowrap ${
               activeTab === 'ipk'
                 ? 'bg-amber-600 text-white font-semibold shadow-sm'
                 : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            <Package className="w-3.5 h-3.5 text-amber-200" />
+            <Package className="w-3.5 h-3.5 text-amber-200 shrink-0" />
             <span>IPK 软件包与部署</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400/25 text-amber-100 font-mono font-bold">v{FULL_VERSION}</span>
           </button>
           <button
             onClick={() => setActiveTab('yaml')}
-            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
+            className={`px-3 py-1.5 rounded-xl font-medium transition-all apple-press shrink-0 whitespace-nowrap ${
               activeTab === 'yaml'
                 ? 'bg-indigo-600 text-white font-semibold shadow-sm'
                 : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
@@ -263,7 +263,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('uci')}
-            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
+            className={`px-3 py-1.5 rounded-xl font-medium transition-all apple-press shrink-0 whitespace-nowrap ${
               activeTab === 'uci'
                 ? 'bg-indigo-600 text-white font-semibold shadow-sm'
                 : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'
@@ -273,7 +273,7 @@ export const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('sync')}
-            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all apple-press ${
+            className={`px-3 py-1.5 rounded-xl font-medium transition-all apple-press shrink-0 whitespace-nowrap ${
               activeTab === 'sync'
                 ? 'bg-indigo-600 text-white font-semibold shadow-sm'
                 : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-slate-400 dark:hover:text-slate-200'

@@ -176,7 +176,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#090a0f] text-[#1d1d1f] dark:text-[#f5f5f7] flex flex-col selection:bg-indigo-500/30 selection:text-indigo-600 dark:selection:text-indigo-200 transition-colors duration-200">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#090a0f] text-[#1d1d1f] dark:text-[#f5f5f7] flex flex-col selection:bg-indigo-500/30 selection:text-indigo-600 dark:selection:text-indigo-200 transition-colors duration-200 overflow-x-hidden">
       
       {/* Top Header */}
       <Header
@@ -194,7 +194,7 @@ export default function App() {
       />
 
       {/* Main Content Area (Responsive padding full width 100%) */}
-      <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-3 sm:py-5">
+      <main className="flex-1 w-full max-w-[100vw] px-2 sm:px-4 lg:px-6 py-3 sm:py-5 overflow-x-hidden">
         
         {/* TAB 1: Drag & Drop Rule Board */}
         {activeTab === 'routing' && (

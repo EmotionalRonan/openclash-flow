@@ -494,34 +494,36 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 self-stretch sm:self-end md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 self-stretch sm:self-end md:self-auto">
           {/* Preset 1-Click Load Button */}
           <button
             id="btn-load-fallback-all"
             onClick={handleLoadFallbackAllPreset}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-500/30 apple-press transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-500/30 apple-press transition-colors shrink-0"
             title="载入 clash-fallback-all 生产级 35+ 策略组"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>载入 Fallback-All 生产策略</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">载入 Fallback-All 生产策略</span>
+            <span className="sm:hidden whitespace-nowrap">Fallback-All 策略</span>
           </button>
 
           {/* Sync from URL Button */}
           <button
             onClick={() => setShowSyncYamlModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors shrink-0"
             title="从远程 GitHub / URL 配置文件拉取并覆盖"
           >
-            <DownloadCloud className="w-3.5 h-3.5" />
-            <span>从远程 YAML 同步</span>
+            <DownloadCloud className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">从远程 YAML 同步</span>
+            <span className="sm:hidden whitespace-nowrap">远程同步</span>
           </button>
 
           {/* Add Group Button */}
           <button
             onClick={() => setShowAddGroupModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-[#1d1d1f] dark:text-[#d4d4d8] text-xs font-semibold border border-black/[0.08] dark:border-white/[0.08] apple-press transition-colors shrink-0 whitespace-nowrap"
           >
-            <FolderPlus className="w-3.5 h-3.5" />
+            <FolderPlus className="w-3.5 h-3.5 shrink-0" />
             <span>新建策略组</span>
           </button>
 
@@ -529,45 +531,46 @@ export const DragDropRuleBoard: React.FC<DragDropRuleBoardProps> = ({
           <button
             id="btn-add-custom-rule"
             onClick={() => setShowAddCustomModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm apple-press transition-colors shrink-0"
           >
-            <Plus className="w-4 h-4" />
-            <span>添加分流规则</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">添加分流规则</span>
+            <span className="sm:hidden whitespace-nowrap">添加规则</span>
           </button>
 
           {/* View mode switcher */}
-          <div className="flex bg-slate-100 dark:bg-[#12131b] p-1 rounded-2xl border border-black/[0.08] dark:border-white/[0.08] text-xs">
+          <div className="flex overflow-x-auto max-w-full scrollbar-none bg-slate-100 dark:bg-[#12131b] p-1 rounded-2xl border border-black/[0.08] dark:border-white/[0.08] text-xs shrink-0">
             <button
               onClick={() => setActiveTab('canvas')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium apple-press transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl font-medium apple-press transition-all shrink-0 whitespace-nowrap ${
                 activeTab === 'canvas'
                   ? 'bg-white dark:bg-white/[0.12] text-[#1d1d1f] dark:text-white shadow-sm border border-black/[0.06] dark:border-white/[0.1]'
                   : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-[#f5f5f7]'
               }`}
             >
-              <Workflow className="w-3.5 h-3.5" />
+              <Workflow className="w-3.5 h-3.5 shrink-0" />
               <span>拓扑流图</span>
             </button>
             <button
               onClick={() => setActiveTab('board')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium apple-press transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl font-medium apple-press transition-all shrink-0 whitespace-nowrap ${
                 activeTab === 'board'
                   ? 'bg-white dark:bg-white/[0.12] text-[#1d1d1f] dark:text-white shadow-sm border border-black/[0.06] dark:border-white/[0.1]'
                   : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-[#f5f5f7]'
               }`}
             >
-              <Kanban className="w-3.5 h-3.5" />
+              <Kanban className="w-3.5 h-3.5 shrink-0" />
               <span>策略看板 ({policyGroups.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('priority')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium apple-press transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl font-medium apple-press transition-all shrink-0 whitespace-nowrap ${
                 activeTab === 'priority'
                   ? 'bg-white dark:bg-white/[0.12] text-[#1d1d1f] dark:text-white shadow-sm border border-black/[0.06] dark:border-white/[0.1]'
                   : 'text-[#6e6e73] hover:text-[#1d1d1f] dark:text-[#86868b] dark:hover:text-[#f5f5f7]'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
+              <Layers className="w-3.5 h-3.5 shrink-0" />
               <span>规则次序 ({rules.length})</span>
             </button>
           </div>
