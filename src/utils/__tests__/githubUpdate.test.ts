@@ -28,6 +28,11 @@ describe('GitHub Update Utility', () => {
     expect(compareVersions('1.0.6-1', '1.0.7')).toBe(1);
     expect(compareVersions('1.0.6-1', 'v1.0.7-1')).toBe(1);
 
+    // Specifically test user scenario: 1.0.6-3 installed, remote has 1.0.7-1
+    expect(compareVersions('1.0.6-3', '1.0.7-1')).toBe(1);
+    expect(compareVersions('1.0.6-3', 'v1.0.7-1')).toBe(1);
+    expect(compareVersions('1.0.6-3', 'luci-app-openclash-flow_1.0.7-1')).toBe(1);
+
     // 1.0.6-2 is newer than 1.0.6-1 (release bump)
     expect(compareVersions('1.0.6-1', '1.0.6-2')).toBe(1);
 
@@ -66,7 +71,7 @@ describe('GitHub Update Utility', () => {
 
   it('returns hasUpdate: false and does not invent fake versions when repository has no releases on GitHub', async () => {
     // When querying a repository that has no release, it must strictly return hasUpdate: false and keep currentVersion
-    const result = await checkForAppUpdate('1.0.6-1', 'openclash-flow/luci-app-openclash-flow', 'direct', undefined, 'x86_64');
+    const result = await checkForAppUpdate('1.0.6-1', 'EmotionalRonan/openclash-flow', 'direct', undefined, 'x86_64');
     expect(result.hasUpdate).toBe(false);
     expect(result.latestVersion).toBe('1.0.6-1');
   });

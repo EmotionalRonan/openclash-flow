@@ -108,10 +108,15 @@ export default function App() {
 
   // Auto-check GitHub updates on app start
   useEffect(() => {
-    const repo = localStorage.getItem('openclash_github_repo') || DEFAULT_GITHUB_REPO;
+    let repo = localStorage.getItem('openclash_github_repo');
+    if (!repo || repo === 'openclash-flow/luci-app-openclash-flow') {
+      repo = DEFAULT_GITHUB_REPO;
+      localStorage.setItem('openclash_github_repo', DEFAULT_GITHUB_REPO);
+    }
     const mirror = (localStorage.getItem('openclash_github_mirror') as any) || 'direct';
+    const token = localStorage.getItem('openclash_github_token') || undefined;
 
-    checkForAppUpdate(runtimeVer, repo, mirror)
+    checkForAppUpdate(runtimeVer, repo, mirror, undefined, 'all', token)
       .then((res) => {
         setUpdateResult(res);
         if (res.hasUpdate) {

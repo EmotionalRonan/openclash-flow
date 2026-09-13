@@ -58,7 +58,7 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
   targetArch = 'all',
   initialCheckResult = null,
 }) => {
-  const currentVersion = getRuntimeVersion();
+  const [currentVersion, setCurrentVersion] = useState<string>(() => getRuntimeVersion());
   const [selectedArch, setSelectedArch] = useState<string>(targetArch);
   const [checking, setChecking] = useState<boolean>(false);
   const [checkResult, setCheckResult] = useState<UpdateCheckResult | null>(initialCheckResult);
@@ -67,10 +67,19 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
 
   // Custom Settings State
   const [repo, setRepo] = useState<string>(() => {
-    return localStorage.getItem('openclash_github_repo') || DEFAULT_GITHUB_REPO;
+    const saved = localStorage.getItem('openclash_github_repo');
+    if (!saved || saved === 'openclash-flow/luci-app-openclash-flow') {
+      localStorage.setItem('openclash_github_repo', DEFAULT_GITHUB_REPO);
+      return DEFAULT_GITHUB_REPO;
+    }
+    return saved;
   });
   const [mirror, setMirror] = useState<GitHubMirror>(() => {
     return (localStorage.getItem('openclash_github_mirror') as GitHubMirror) || 'direct';
+  });
+  const [customLocalVer, setCustomLocalVer] = useState<string>(currentVersion);
+  const [token, setToken] = useState<string>(() => {
+    return localStorage.getItem('openclash_github_token') || '';
   });
 
   // In-app Update Progress State
@@ -85,20 +94,22 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (!checkResult) {
-        handleCheckUpdate();
+        handleCheckUpdate(false, currentVersion);
       }
     }
   }, [isOpen]);
 
-  const handleCheckUpdate = async (isManual: boolean = false) => {
+  const handleCheckUpdate = async (isManual: boolean = false, verToUse?: string) => {
+    const ver = verToUse || currentVersion;
     setChecking(true);
     try {
       const res = await checkForAppUpdate(
-        currentVersion,
+        ver,
         repo,
         mirror,
         undefined,
-        selectedArch
+        selectedArch,
+        token
       );
       setCheckResult(res);
       // Save last checked timestamp
@@ -110,12 +121,18 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
     }
   };
 
-  // Switch repo or mirror
+  // Switch repo or mirror or custom version
   const handleSaveSettings = () => {
-    localStorage.setItem('openclash_github_repo', repo.trim());
+    const trimmedRepo = repo.trim();
+    localStorage.setItem('openclash_github_repo', trimmedRepo);
     localStorage.setItem('openclash_github_mirror', mirror);
+    localStorage.setItem('openclash_github_token', token.trim());
+    if (customLocalVer.trim() && customLocalVer.trim() !== currentVersion) {
+      setRuntimeVersion(customLocalVer.trim());
+      setCurrentVersion(customLocalVer.trim());
+    }
     setShowConfig(false);
-    handleCheckUpdate(true);
+    handleCheckUpdate(true, customLocalVer.trim() || currentVersion);
   };
 
   // Execute direct update inside interface
@@ -261,7 +278,7 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
         {showConfig && (
           <div className="p-3.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.08] space-y-3 text-xs shrink-0 animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="flex items-center justify-between font-semibold">
-              <span>GitHub 仓库与网络加速</span>
+              <span>GitHub 仓库与网络配置</span>
               <button
                 onClick={handleSaveSettings}
                 className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-medium"
@@ -269,16 +286,45 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
                 保存并检测
               </button>
             </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <label className="text-[#6e6e73] dark:text-[#8e8e93]">GitHub 仓库 (Owner/Repo)</label>
+                <input
+                  type="text"
+                  value={repo}
+                  onChange={(e) => setRepo(e.target.value)}
+                  placeholder="例如: EmotionalRonan/openclash-flow"
+                  className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#0c0d12] border border-black/[0.1] dark:border-white/[0.1] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[#6e6e73] dark:text-[#8e8e93]">当前安装版本 (测试/模拟)</label>
+                <input
+                  type="text"
+                  value={customLocalVer}
+                  onChange={(e) => setCustomLocalVer(e.target.value)}
+                  placeholder="例如: 1.0.6-3"
+                  className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#0c0d12] border border-black/[0.1] dark:border-white/[0.1] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
             <div className="space-y-1">
-              <label className="text-[#6e6e73] dark:text-[#8e8e93]">仓库地址 (Owner/Repo)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[#6e6e73] dark:text-[#8e8e93]">GitHub Token (可选，仅私有仓库需要)</label>
+                <span className="text-[10px] text-[#86868b]">私有仓库须填 PAT</span>
+              </div>
               <input
-                type="text"
-                value={repo}
-                onChange={(e) => setRepo(e.target.value)}
-                placeholder="例如: openclash-flow/luci-app-openclash-flow"
+                type="password"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="github_pat_xxxx 或 ghp_xxxx (公开仓库无需填写)"
                 className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#0c0d12] border border-black/[0.1] dark:border-white/[0.1] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
+
             <div className="space-y-1">
               <label className="text-[#6e6e73] dark:text-[#8e8e93]">下载加速通道 (镜像 CDN)</label>
               <div className="grid grid-cols-3 gap-2">
@@ -310,13 +356,19 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
           
           {/* Version Comparison Card */}
           <div className={`p-4 rounded-2xl border transition-all ${
-            hasUpdate
+            checkResult?.error
+              ? 'bg-amber-500/[0.06] dark:bg-amber-500/[0.12] border-amber-500/30'
+              : hasUpdate
               ? 'bg-indigo-500/[0.06] dark:bg-indigo-500/[0.12] border-indigo-500/30'
               : 'bg-emerald-500/[0.06] dark:bg-emerald-500/[0.12] border-emerald-500/30'
           }`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                {hasUpdate ? (
+                {checkResult?.error ? (
+                  <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-600/20 shrink-0">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                ) : hasUpdate ? (
                   <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0 animate-pulse">
                     <Sparkles className="w-5 h-5" />
                   </div>
@@ -328,16 +380,22 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm sm:text-base">
-                      {hasUpdate ? `发现新版本 v${latestVer}` : (checkResult?.statusMessage || '当前已是最新版本')}
+                      {checkResult?.error 
+                        ? 'GitHub 检查提示' 
+                        : hasUpdate 
+                        ? `发现新版本 v${latestVer}` 
+                        : (checkResult?.statusMessage || '当前已是最新版本')}
                     </span>
-                    {hasUpdate && (
+                    {hasUpdate && !checkResult?.error && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-600 text-white shadow-xs">
                         NEW
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-[#6e6e73] dark:text-[#a1a1aa] mt-0.5">
-                    {hasUpdate 
+                    {checkResult?.error
+                      ? checkResult.statusMessage
+                      : hasUpdate 
                       ? `本地版本: v${currentVersion} ➔ 云端最新: v${latestVer}`
                       : `本地运行版本 (v${currentVersion}) 与 GitHub 保持一致，未发现新版本`}
                   </p>

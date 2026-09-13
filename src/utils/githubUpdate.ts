@@ -1,7 +1,7 @@
 import { GitHubRelease, GitHubAsset, UpdateCheckResult, UpdateProgress, GitHubMirror } from '../types/update';
 import { FULL_VERSION } from '../version';
 
-export const DEFAULT_GITHUB_REPO = 'openclash-flow/luci-app-openclash-flow';
+export const DEFAULT_GITHUB_REPO = 'EmotionalRonan/openclash-flow';
 
 export interface VersionParts {
   nums: number[];
@@ -10,13 +10,28 @@ export interface VersionParts {
 }
 
 /**
- * 解析版本字符串 (支持 1.0.6, v1.0.6, 1.0.6-1, 2026.09.09 等各式 tag)
+ * 解析版本字符串 (支持 1.0.6, v1.0.6, 1.0.6-3, 1.0.7-1, luci-app-openclash-flow_1.0.7-1 等各式 tag)
  */
 export function parseVersion(v: string): VersionParts {
   if (!v) return { nums: [0, 0, 0], release: 0, raw: '' };
-  const cleaned = v.trim().replace(/^[vV]/, '');
+  const str = v.trim();
+  
+  // 优先采用正则提取连续数字点分段，以及可能存在的修订号 (-1 或 _1)
+  const match = str.match(/(\d+(?:\.\d+)+)(?:[-_](\d+))?/);
+  if (match) {
+    const verPart = match[1];
+    const relPart = match[2];
+    const nums = verPart.split('.').map(n => {
+      const num = parseInt(n, 10);
+      return isNaN(num) ? 0 : num;
+    });
+    const release = relPart ? parseInt(relPart, 10) || 0 : 0;
+    return { nums, release, raw: match[0] };
+  }
+
+  const cleaned = str.replace(/^[vV]/, '');
   const [verPart, relPart] = cleaned.split('-');
-  const nums = verPart.split('.').map(n => {
+  const nums = (verPart || '').split('.').map(n => {
     const num = parseInt(n, 10);
     return isNaN(num) ? 0 : num;
   });
@@ -166,27 +181,39 @@ export function getMockLatestRelease(currentVer: string): GitHubRelease {
   };
 }
 
+export interface FetchReleaseResult {
+  release: GitHubRelease | null;
+  errorType?: 'not_found' | 'rate_limit' | 'network_error' | 'no_release';
+  errorDetail?: string;
+}
+
 /**
  * 发起真实的 GitHub API 检查
- * 严格按照 GitHub 的实际发布情况检测，若云端无 Release 或尚未发布更高版本，返回 null，绝不伪造虚假版本
+ * 严格按照 GitHub 的实际发布情况检测，若云端无 Release 或尚未发布更高版本，返回明确状态
  */
 export async function fetchLatestRelease(
   repo: string = DEFAULT_GITHUB_REPO,
   mirror: GitHubMirror = 'direct',
-  customPrefix?: string
-): Promise<GitHubRelease | null> {
+  customPrefix?: string,
+  token?: string
+): Promise<FetchReleaseResult> {
   const targetRepo = repo.trim() || DEFAULT_GITHUB_REPO;
+  // 注意：GitHub REST API 应请求 api.github.com，避免被针对下载域名的镜像破坏
   const apiUrl = `https://api.github.com/repos/${targetRepo}/releases/latest`;
-  const requestUrl = getAcceleratedUrl(apiUrl, mirror, customPrefix);
+
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github.v3+json',
+  };
+  if (token && token.trim()) {
+    headers['Authorization'] = `Bearer ${token.trim()}`;
+  }
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 7000);
 
-    const response = await fetch(requestUrl, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-      },
+    const response = await fetch(apiUrl, {
+      headers,
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -200,28 +227,31 @@ export async function fetchLatestRelease(
           arch: detectAssetArch(a.name),
         }));
       }
-      return data;
+      return { release: data };
     }
 
-    // 若 404，尝试获取全部 releases 列表（处理预发布或普通 releases）
+    // 若 404，尝试获取全部 releases 列表（优先兼容处理 Pre-release 预发布版本）
     if (response.status === 404) {
-      console.info(`[GitHub Update] 仓库 ${targetRepo} 的 releases/latest 返回 404，尝试检查所有 releases...`);
+      console.info(`[GitHub Update] 仓库 ${targetRepo} 的 releases/latest 返回 404，尝试检查所有 releases (含 Pre-release)...`);
       try {
-        const listUrl = getAcceleratedUrl(`https://api.github.com/repos/${targetRepo}/releases?per_page=1`, mirror, customPrefix);
+        const listUrl = `https://api.github.com/repos/${targetRepo}/releases?per_page=5`;
         const listRes = await fetch(listUrl, {
-          headers: { Accept: 'application/vnd.github.v3+json' },
+          headers,
         });
         if (listRes.ok) {
           const list = (await listRes.json()) as GitHubRelease[];
           if (Array.isArray(list) && list.length > 0) {
-            const first = list[0];
-            if (Array.isArray(first.assets)) {
-              first.assets = first.assets.map(a => ({
-                ...a,
-                arch: detectAssetArch(a.name),
-              }));
+            // 取最新发布的非 Draft 项
+            const published = list.find(item => !item.draft) || list[0];
+            if (published) {
+              if (Array.isArray(published.assets)) {
+                published.assets = published.assets.map(a => ({
+                  ...a,
+                  arch: detectAssetArch(a.name),
+                }));
+              }
+              return { release: published };
             }
-            return first;
           }
         }
       } catch (listErr) {
@@ -229,51 +259,88 @@ export async function fetchLatestRelease(
       }
 
       console.info(`[GitHub Update] 仓库 ${targetRepo} 在 GitHub 上暂无任何 Release 发布记录。`);
-      return null;
+      return { 
+        release: null, 
+        errorType: 'not_found', 
+        errorDetail: `GitHub 仓库 ${targetRepo} 返回 404。\n注意：若该仓库为 Private (私有仓库)，未带 Token 访问时 GitHub 会统一返回 404。请将仓库设为 Public (公开) 或在设置中配置 GitHub Token。` 
+      };
     }
 
     // 403 频次限制或其它错误
+    if (response.status === 403) {
+      return { 
+        release: null, 
+        errorType: 'rate_limit', 
+        errorDetail: 'GitHub API 访问频次受限 (HTTP 403 Rate Limit)，请稍后再试。' 
+      };
+    }
+
     console.warn(`[GitHub Update] GitHub API 响应 HTTP ${response.status}`);
-    return null;
+    return { 
+      release: null, 
+      errorType: 'network_error', 
+      errorDetail: `GitHub API 响应 HTTP ${response.status}` 
+    };
   } catch (err: any) {
     console.warn('[GitHub Update] GitHub API 请求异常:', err?.message);
-    return null;
+    return { 
+      release: null, 
+      errorType: 'network_error', 
+      errorDetail: err?.message || '网络通讯中断，无法连接 GitHub API' 
+    };
   }
 }
 
 /**
  * 完整检测更新逻辑
  * 严格基于 GitHub 实际情况：
- * 1. 若 GitHub 仓库不存在或未发布 Release：判定为无更新（hasUpdate: false）
+ * 1. 若 GitHub 仓库不存在或未发布 Release：清晰提示仓库地址排查指引
  * 2. 若 GitHub 存在 Release 且版本号严格大于当前版本号：判定为有更新（hasUpdate: true）
- * 3. 否则判定为无更新，绝不虚报不存在的版本
+ * 3. 否则判定为无更新或报错提示，绝不伪造虚假版本
  */
 export async function checkForAppUpdate(
   currentVersion: string = FULL_VERSION,
   repo: string = DEFAULT_GITHUB_REPO,
   mirror: GitHubMirror = 'direct',
   customPrefix?: string,
-  targetArch: string = 'all'
+  targetArch: string = 'all',
+  token?: string
 ): Promise<UpdateCheckResult> {
   const targetRepo = repo.trim() || DEFAULT_GITHUB_REPO;
   try {
-    const release = await fetchLatestRelease(targetRepo, mirror, customPrefix);
+    const { release, errorType, errorDetail } = await fetchLatestRelease(targetRepo, mirror, customPrefix, token);
 
-    // 情况 1: GitHub 暂无 Release 或网络无法访问
+    // 情况 1: 未找到 Release 或网络无法访问
     if (!release) {
+      if (errorType === 'not_found') {
+        return {
+          hasUpdate: false,
+          currentVersion,
+          latestVersion: currentVersion,
+          releaseNotes: `已连接 GitHub 检索 [${targetRepo}]：\n1. 仓库在 GitHub 上返回 404 (Not Found)。\n2. 【最重要原因】如果该仓库在 GitHub 上设为「Private (私有)」，GitHub 官方 API 会自动对未授权请求返回 404。若希望插件直接检测，请进入仓库 Settings 将其设为「Public (公开)」，或在设置中填写个人 GitHub Token (PAT)。\n3. 若刚创建 Release，请确认已点击「Publish release」正式发布而非草稿 (Draft)。`,
+          publishedAt: new Date().toISOString(),
+          releaseUrl: `https://github.com/${targetRepo}`,
+          statusMessage: `未检索到可用 Release (可能为私有仓库或尚未公开发布)`,
+          error: errorDetail,
+        };
+      }
+
       return {
         hasUpdate: false,
         currentVersion,
         latestVersion: currentVersion,
-        releaseNotes: `已连接 GitHub 检索 ${targetRepo}：该仓库在云端暂未发布任何 Release 软件包。当前本地安装运行的版本 (v${currentVersion}) 已是最新。`,
+        releaseNotes: errorDetail || `无法连接 GitHub 检查更新，保持当前运行版本 (v${currentVersion})。`,
         publishedAt: new Date().toISOString(),
         releaseUrl: `https://github.com/${targetRepo}`,
-        statusMessage: `当前已是最新版本 (GitHub 仓库暂无更新 Release)`,
+        statusMessage: `GitHub 连接受阻 (${errorDetail || '网络异常'})`,
+        error: errorDetail,
       };
     }
 
     const rawVer = release.tag_name || release.name || '';
-    const cleanVer = rawVer.trim().replace(/^[vV]/, '');
+    const parsed = parseVersion(rawVer);
+    const cleanVer = parsed.raw || rawVer.trim().replace(/^[vV]/, '');
+    
     // 只有当 remote 版本实际大于 local 版本时才提示更新
     const hasUpdate = compareVersions(currentVersion, cleanVer) > 0;
 
@@ -292,7 +359,7 @@ export async function checkForAppUpdate(
       release,
       matchingAsset,
       statusMessage: hasUpdate
-        ? `发现 GitHub 新版本 v${cleanVer}`
+        ? `发现 GitHub 新版本 v${cleanVer}！`
         : `当前已是最新版本 (GitHub 最新为 v${cleanVer})`,
     };
   } catch (e: any) {
@@ -304,7 +371,7 @@ export async function checkForAppUpdate(
       publishedAt: new Date().toISOString(),
       releaseUrl: `https://github.com/${targetRepo}`,
       error: e?.message || '无法连接 GitHub 服务器',
-      statusMessage: `检测完成：保持当前版本 v${currentVersion}`,
+      statusMessage: `检测异常：保持当前版本 v${currentVersion}`,
     };
   }
 }
