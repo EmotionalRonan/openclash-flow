@@ -292,6 +292,35 @@ export async function fetchLatestRelease(
 }
 
 /**
+ * 提取 Release 中的真实语义化版本号（优先匹配 IPK 资产文件名与 Release 标题中的语义化版本，其次使用 tag_name）
+ * 能够优雅兼容形如 tag: 2026.09.13 搭配 name: "OpenClash Flow v1.0.7-1 (2026.09.13)" 的发行版
+ */
+export function extractReleaseVersion(release: GitHubRelease): string {
+  // 1. 尝试从 IPK 资产文件名提取 (如 luci-app-openclash-flow_1.0.7-1_x86_64.ipk -> 1.0.7-1)
+  if (Array.isArray(release.assets)) {
+    for (const asset of release.assets) {
+      const ipkMatch = asset.name?.match(/luci-app-openclash-flow_(\d+\.\d+\.\d+(?:[-_]\d+)?)/i);
+      if (ipkMatch && ipkMatch[1]) {
+        return ipkMatch[1].replace('_', '-');
+      }
+    }
+  }
+
+  // 2. 尝试从 release.name 提取语义化版本 (如 "OpenClash Flow v1.0.7-1 (2026.09.13)" -> 1.0.7-1)
+  if (release.name) {
+    const nameMatch = release.name.match(/v?(\d+\.\d+\.\d+(?:[-_]\d+)?)/i);
+    if (nameMatch && nameMatch[1]) {
+      return nameMatch[1].replace('_', '-');
+    }
+  }
+
+  // 3. 回退至 tag_name 解析
+  const rawVer = release.tag_name || release.name || '';
+  const parsed = parseVersion(rawVer);
+  return parsed.raw || rawVer.trim().replace(/^[vV]/, '');
+}
+
+/**
  * 完整检测更新逻辑
  * 严格基于 GitHub 实际情况：
  * 1. 若 GitHub 仓库不存在或未发布 Release：清晰提示仓库地址排查指引
@@ -337,9 +366,7 @@ export async function checkForAppUpdate(
       };
     }
 
-    const rawVer = release.tag_name || release.name || '';
-    const parsed = parseVersion(rawVer);
-    const cleanVer = parsed.raw || rawVer.trim().replace(/^[vV]/, '');
+    const cleanVer = extractReleaseVersion(release);
     
     // 只有当 remote 版本实际大于 local 版本时才提示更新
     const hasUpdate = compareVersions(currentVersion, cleanVer) > 0;
