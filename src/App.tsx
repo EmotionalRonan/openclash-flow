@@ -213,6 +213,7 @@ export default function App() {
             rules={rules}
             policyGroups={policyGroups}
             proxies={proxies}
+            settings={settings}
             onNavigateToRouting={() => setActiveTab('routing')}
           />
         )}
