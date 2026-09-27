@@ -65,14 +65,10 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
-  // Custom Settings State
+  // Custom Settings State - Always default to and enforce DEFAULT_GITHUB_REPO (EmotionalRonan/openclash-flow)
   const [repo, setRepo] = useState<string>(() => {
-    const saved = localStorage.getItem('openclash_github_repo');
-    if (!saved || saved === 'openclash-flow/luci-app-openclash-flow') {
-      localStorage.setItem('openclash_github_repo', DEFAULT_GITHUB_REPO);
-      return DEFAULT_GITHUB_REPO;
-    }
-    return saved;
+    localStorage.setItem('openclash_github_repo', DEFAULT_GITHUB_REPO);
+    return DEFAULT_GITHUB_REPO;
   });
   const [mirror, setMirror] = useState<GitHubMirror>(() => {
     return (localStorage.getItem('openclash_github_mirror') as GitHubMirror) || 'direct';
@@ -101,11 +97,12 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
 
   const handleCheckUpdate = async (isManual: boolean = false, verToUse?: string) => {
     const ver = verToUse || currentVersion;
+    const targetRepo = repo.trim() || DEFAULT_GITHUB_REPO;
     setChecking(true);
     try {
       const res = await checkForAppUpdate(
         ver,
-        repo,
+        targetRepo,
         mirror,
         undefined,
         selectedArch,
@@ -123,7 +120,8 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
 
   // Switch repo or mirror or custom version
   const handleSaveSettings = () => {
-    const trimmedRepo = repo.trim();
+    const trimmedRepo = repo.trim() || DEFAULT_GITHUB_REPO;
+    setRepo(trimmedRepo);
     localStorage.setItem('openclash_github_repo', trimmedRepo);
     localStorage.setItem('openclash_github_mirror', mirror);
     localStorage.setItem('openclash_github_token', token.trim());
@@ -289,14 +287,29 @@ export const GitHubUpdateModal: React.FC<GitHubUpdateModalProps> = ({
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="text-[#6e6e73] dark:text-[#8e8e93]">GitHub 仓库 (Owner/Repo)</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[#6e6e73] dark:text-[#8e8e93]">GitHub 仓库 (Owner/Repo)</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRepo(DEFAULT_GITHUB_REPO);
+                      localStorage.setItem('openclash_github_repo', DEFAULT_GITHUB_REPO);
+                    }}
+                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    重置为官方仓库
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={repo}
                   onChange={(e) => setRepo(e.target.value)}
-                  placeholder="例如: EmotionalRonan/openclash-flow"
+                  placeholder={`例如: ${DEFAULT_GITHUB_REPO}`}
                   className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#0c0d12] border border-black/[0.1] dark:border-white/[0.1] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
+                <span className="text-[10px] text-[#86868b] block font-mono">
+                  官方默认源: <strong className="text-indigo-600 dark:text-indigo-400 font-semibold">{DEFAULT_GITHUB_REPO}</strong>
+                </span>
               </div>
 
               <div className="space-y-1">

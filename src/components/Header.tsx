@@ -550,6 +550,44 @@ export const Header: React.FC<HeaderProps> = ({
                 />
               </div>
 
+              {/* GitHub Repository Setting */}
+              <div className="col-span-1 md:col-span-2 space-y-1.5 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.06]">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#1d1d1f] dark:text-white flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>固件与插件更新仓库地址 (GitHub Repo)</span>
+                  </label>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-semibold">
+                    官方源锁定: EmotionalRonan/openclash-flow
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={settings.githubRepo || 'EmotionalRonan/openclash-flow'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettings({ ...settings, githubRepo: val });
+                    }}
+                    placeholder="EmotionalRonan/openclash-flow"
+                    className="flex-1 bg-white dark:bg-[#0c0d12] border border-black/[0.1] dark:border-white/[0.1] rounded-xl px-3 py-2 text-[#1d1d1f] dark:text-[#f5f5f7] font-mono text-xs focus:border-indigo-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings({ ...settings, githubRepo: 'EmotionalRonan/openclash-flow' });
+                      localStorage.setItem('openclash_github_repo', 'EmotionalRonan/openclash-flow');
+                    }}
+                    className="px-3 py-2 rounded-xl bg-black/[0.05] hover:bg-black/[0.1] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-xs text-[#6e6e73] dark:text-[#a1a1aa] font-medium transition-colors shrink-0"
+                  >
+                    重置为官方仓库
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#86868b]">
+                  当前插件固件在线热更新及 Release 包检索的固定源仓库：<code className="text-indigo-600 dark:text-indigo-400 font-mono font-semibold">EmotionalRonan/openclash-flow</code>
+                </p>
+              </div>
+
               {/* GitHub Update section inside Settings modal */}
               <div className="col-span-1 md:col-span-2 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between gap-3">
                 <div>
@@ -586,7 +624,11 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div className="pt-2 flex justify-end gap-2.5 border-t border-black/[0.08] dark:border-white/[0.08]">
               <button
-                onClick={() => setShowSettingsModal(false)}
+                onClick={() => {
+                  const targetRepo = settings.githubRepo?.trim() || 'EmotionalRonan/openclash-flow';
+                  localStorage.setItem('openclash_github_repo', targetRepo);
+                  setShowSettingsModal(false);
+                }}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold apple-press shadow-md"
               >
                 保存并生效

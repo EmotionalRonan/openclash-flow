@@ -52,7 +52,26 @@ export default function App() {
   const [runtimeVer, setRuntimeVer] = useState<string>(getRuntimeVersion());
 
   // Core State (initialized with production fallback-all config or cached CRUD state)
-  const [settings, setSettings] = useState<OpenClashSettings>(DEFAULT_OPENCLASH_SETTINGS);
+  const [settings, setSettings] = useState<OpenClashSettings>(() => {
+    try {
+      const saved = localStorage.getItem('openclash_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_OPENCLASH_SETTINGS,
+          ...parsed,
+          githubRepo: DEFAULT_GITHUB_REPO,
+        };
+      }
+    } catch (e) {}
+    return DEFAULT_OPENCLASH_SETTINGS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('openclash_settings', JSON.stringify(settings));
+    } catch (e) {}
+  }, [settings]);
 
   const [policyGroups, setPolicyGroups] = useState<PolicyGroup[]>(() => {
     try {
@@ -114,7 +133,7 @@ export default function App() {
   // Auto-check GitHub updates on app start
   useEffect(() => {
     let repo = localStorage.getItem('openclash_github_repo');
-    if (!repo || repo === 'openclash-flow/luci-app-openclash-flow') {
+    if (!repo || repo !== DEFAULT_GITHUB_REPO) {
       repo = DEFAULT_GITHUB_REPO;
       localStorage.setItem('openclash_github_repo', DEFAULT_GITHUB_REPO);
     }

@@ -101,6 +101,7 @@ export interface OpenClashSettings {
   tunStack: 'system' | 'gvisor' | 'mixed';
   dnsPort: number;
   enableGeoIPDat: boolean;
+  githubRepo?: string;
 }
 
 export interface LogEntry {

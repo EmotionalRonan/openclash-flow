@@ -817,4 +817,5 @@ export const DEFAULT_OPENCLASH_SETTINGS: OpenClashSettings = {
   tunStack: 'mixed',
   dnsPort: 7874,
   enableGeoIPDat: true,
+  githubRepo: 'EmotionalRonan/openclash-flow',
 };
