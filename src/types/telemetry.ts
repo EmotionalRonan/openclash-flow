@@ -12,6 +12,28 @@ export type DeviceType =
   | 'iot'
   | 'other';
 
+export interface ClientConnectionItem {
+  id: string;
+  network: 'tcp' | 'udp' | string;
+  type?: string;
+  host: string;
+  destinationIP: string;
+  destinationPort: number;
+  sourcePort?: number;
+  rule: string;
+  rulePayload: string;
+  outboundGroup: string;
+  outboundNode: string;
+  upload: number;
+  download: number;
+  uploadSpeed: number;
+  downloadSpeed: number;
+  start?: string;
+  process?: string;
+}
+
+export type DeviceBypassMode = 'rule' | 'global_proxy' | 'direct' | 'block';
+
 export interface ClientDevice {
   id: string;
   ip: string;
@@ -35,6 +57,10 @@ export interface ClientDevice {
     hitCount: number;
   }[];
   isBlocked?: boolean;
+  isCurrentClient?: boolean;
+  bypassMode?: DeviceBypassMode;
+  customAssignedGroup?: string;
+  activeConnectionsList?: ClientConnectionItem[];
 }
 
 export interface RuleAuditRecord {

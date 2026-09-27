@@ -59,7 +59,12 @@ export default function App() {
       const saved = localStorage.getItem('openclash_policy_groups');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((g: PolicyGroup) => ({
+            ...g,
+            proxies: Array.isArray(g.proxies) ? Array.from(new Set(g.proxies)) : g.proxies,
+          }));
+        }
       }
     } catch (e) {}
     return FALLBACK_ALL_POLICY_GROUPS;

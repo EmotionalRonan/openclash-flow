@@ -274,7 +274,7 @@ export const FALLBACK_ALL_POLICY_GROUPS: PolicyGroup[] = [
   { id: 'grp-test', name: 'Test', type: 'select', icon: 'ShieldCheck', color: 'from-slate-500 to-zinc-600', description: '连通性自检规则组', proxies: [...FALLBACK_ALL_DEFAULT_PROXIES] },
   { id: 'grp-block', name: 'Block', type: 'select', icon: 'ShieldBan', color: 'from-rose-600 to-red-700', description: '拦截恶意广告与隐私追踪', proxies: ['拒绝', '直连'] },
   { id: 'grp-foreign', name: '国外', type: 'select', icon: 'Globe', color: 'from-blue-600 to-indigo-600', description: '境外未知网站或未分类流量', proxies: [...FALLBACK_ALL_DEFAULT_PROXIES] },
-  { id: 'grp-domestic', name: '国内', type: 'select', icon: 'Globe', color: 'from-emerald-500 to-teal-600', description: '中国大陆网站与政企直连', proxies: ['直连', ...FALLBACK_ALL_DEFAULT_PROXIES] },
+  { id: 'grp-domestic', name: '国内', type: 'select', icon: 'Globe', color: 'from-emerald-500 to-teal-600', description: '中国大陆网站与政企直连', proxies: [...FALLBACK_ALL_DEFAULT_PROXIES] },
   { id: 'grp-other', name: '其他', type: 'select', icon: 'Layers', color: 'from-slate-600 to-gray-700', description: '最终 MATCH 兜底出口', proxies: [...FALLBACK_ALL_DEFAULT_PROXIES] },
 
   // 2. 地区自动优选与故障转移组 (Fallback / URL-Test / Select)

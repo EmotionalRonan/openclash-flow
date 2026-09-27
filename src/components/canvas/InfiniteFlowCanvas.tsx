@@ -307,42 +307,66 @@ export const InfiniteFlowCanvas: React.FC<InfiniteFlowCanvasProps> = ({
     });
 
     // Dynamic Connections between Groups -> Outbounds / Direct
+    const edgeKeySet = new Set<string>();
+
     policyGroups.forEach((group) => {
-      group.proxies.forEach((proxyName) => {
+      // Deduplicate proxy names in the group to avoid duplicate edges
+      const uniqueProxyNames = Array.from(new Set(group.proxies || []));
+      uniqueProxyNames.forEach((proxyName) => {
         const matchingProxy = proxies.find((p) => p.name === proxyName);
         if (matchingProxy) {
-          newEdges.push({
-            id: `edge-group-${group.id}-proxy-${matchingProxy.id}`,
-            fromNodeId: `node-group-${group.id}`,
-            fromPort: 'out',
-            toNodeId: `node-proxy-${matchingProxy.id}`,
-            toPort: 'in',
-            color: '#8b5cf6',
-          });
-        } else if (proxyName === 'DIRECT') {
-          newEdges.push({
-            id: `edge-group-${group.id}-direct`,
-            fromNodeId: `node-group-${group.id}`,
-            fromPort: 'out',
-            toNodeId: directSink.id,
-            toPort: 'in',
-            color: '#0ea5e9',
-          });
-        } else if (proxyName === 'REJECT') {
-          newEdges.push({
-            id: `edge-group-${group.id}-reject`,
-            fromNodeId: `node-group-${group.id}`,
-            fromPort: 'out',
-            toNodeId: rejectSink.id,
-            toPort: 'in',
-            color: '#f43f5e',
-          });
+          const edgeId = `edge-group-${group.id}-proxy-${matchingProxy.id}`;
+          if (!edgeKeySet.has(edgeId)) {
+            edgeKeySet.add(edgeId);
+            newEdges.push({
+              id: edgeId,
+              fromNodeId: `node-group-${group.id}`,
+              fromPort: 'out',
+              toNodeId: `node-proxy-${matchingProxy.id}`,
+              toPort: 'in',
+              color: '#8b5cf6',
+            });
+          }
+        } else if (proxyName === 'DIRECT' || proxyName === '直连') {
+          const edgeId = `edge-group-${group.id}-direct`;
+          if (!edgeKeySet.has(edgeId)) {
+            edgeKeySet.add(edgeId);
+            newEdges.push({
+              id: edgeId,
+              fromNodeId: `node-group-${group.id}`,
+              fromPort: 'out',
+              toNodeId: directSink.id,
+              toPort: 'in',
+              color: '#0ea5e9',
+            });
+          }
+        } else if (proxyName === 'REJECT' || proxyName === '拒绝') {
+          const edgeId = `edge-group-${group.id}-reject`;
+          if (!edgeKeySet.has(edgeId)) {
+            edgeKeySet.add(edgeId);
+            newEdges.push({
+              id: edgeId,
+              fromNodeId: `node-group-${group.id}`,
+              fromPort: 'out',
+              toNodeId: rejectSink.id,
+              toPort: 'in',
+              color: '#f43f5e',
+            });
+          }
         }
       });
     });
 
+    // Enforce global uniqueness of edge IDs to prevent any React duplicate key warnings
+    const seenEdgeIds = new Set<string>();
+    const deduplicatedEdges = newEdges.filter((edge) => {
+      if (seenEdgeIds.has(edge.id)) return false;
+      seenEdgeIds.add(edge.id);
+      return true;
+    });
+
     setNodes(newNodes);
-    setEdges(newEdges);
+    setEdges(deduplicatedEdges);
   }, [rules, policyGroups, proxies, ruleSearchQuery, ruleCategoryFilter]);
 
   // Initial layout effect

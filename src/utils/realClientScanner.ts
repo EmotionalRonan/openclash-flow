@@ -1,4 +1,4 @@
-import { ClientDevice, DeviceType } from '../types/telemetry';
+import { ClientDevice, DeviceType, ClientConnectionItem } from '../types/telemetry';
 import { TrafficRule } from '../types/openclash';
 
 export interface RealClientFetchResult {
@@ -61,9 +61,100 @@ export function inferVendor(mac: string, hostname: string): string {
 }
 
 /**
- * Fetch real connections from Clash / Mihomo / OpenClash REST API:
+ * Detect local browser visitor device details
+ */
+export function detectLocalDeviceInfo(): { os: string; browser: string; deviceType: DeviceType; name: string } {
+  if (typeof navigator === 'undefined') {
+    return { os: 'Linux', browser: 'Browser', deviceType: 'linux', name: '当前访问设备' };
+  }
+  const ua = navigator.userAgent;
+  let os = 'Unknown OS';
+  let deviceType: DeviceType = 'other';
+  let name = '当前本机终端';
+
+  if (/iPad/.test(ua)) {
+    os = 'iPadOS';
+    deviceType = 'ipad';
+    name = '本机 iPad 平板';
+  } else if (/iPhone|iPod/.test(ua)) {
+    os = 'iOS';
+    deviceType = 'iphone';
+    name = '本机 iPhone 手机';
+  } else if (/Macintosh|Mac OS X/.test(ua)) {
+    os = 'macOS';
+    deviceType = 'mac';
+    name = '本机 Mac 电脑';
+  } else if (/Windows/.test(ua)) {
+    os = 'Windows';
+    deviceType = 'windows';
+    name = '本机 Windows PC';
+  } else if (/Android/.test(ua)) {
+    os = 'Android';
+    deviceType = 'iphone';
+    name = '本机 Android 设备';
+  } else if (/Linux/.test(ua)) {
+    os = 'Linux';
+    deviceType = 'linux';
+    name = '本机 Linux 工作站';
+  }
+
+  let browser = 'Browser';
+  if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) browser = 'Chrome';
+  else if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) browser = 'Safari';
+  else if (/Firefox\//.test(ua)) browser = 'Firefox';
+
+  return { os, browser, deviceType, name };
+}
+
+/**
+ * WebRTC ICE candidate discovery for real local LAN IP
+ */
+export function detectLocalLanIp(): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof RTCPeerConnection === 'undefined') {
+      return resolve('192.168.1.100');
+    }
+
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      pc.createDataChannel('');
+      pc.createOffer().then((offer) => pc.setLocalDescription(offer)).catch(() => {});
+      let resolved = false;
+
+      const timer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          try { pc.close(); } catch {}
+          resolve('');
+        }
+      }, 1200);
+
+      pc.onicecandidate = (ice) => {
+        if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+        const line = ice.candidate.candidate;
+        const ipMatch = line.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+        if (ipMatch && ipMatch[1]) {
+          const ip = ipMatch[1];
+          if (ip.startsWith('192.168.') || ip.startsWith('10.') || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try { pc.close(); } catch {}
+              resolve(ip);
+            }
+          }
+        }
+      };
+    } catch {
+      resolve('');
+    }
+  });
+}
+
+/**
+ * Fetch real connections from Clash / Mihomo / OpenClash / Open-Box REST API:
  * GET http://<routerHost>:<controllerPort>/connections
- * Headers: Authorization: Bearer <secret>
  */
 export async function fetchClashConnections(
   routerHost: string,
@@ -71,7 +162,6 @@ export async function fetchClashConnections(
   secret: string = '',
   timeoutMs: number = 3000
 ): Promise<{ success: boolean; data?: any; error?: string }> {
-  // Try directly or via current host
   const host = routerHost.trim() || '192.168.1.1';
   const port = controllerPort || 9090;
   const baseUrl = `http://${host}:${port}`;
@@ -114,8 +204,38 @@ export async function fetchClashConnections(
 }
 
 /**
- * Fetch real DHCP leases from OpenWrt LuCI ubus / rpc:
- * POST http://<routerHost>/ubus or /cgi-bin/luci/rpc/uci
+ * Terminate / Kill active Clash connection
+ * DELETE http://<routerHost>:<controllerPort>/connections/{id}
+ */
+export async function closeClashConnection(
+  routerHost: string,
+  controllerPort: number,
+  secret: string = '',
+  connectionId: string
+): Promise<{ success: boolean; error?: string }> {
+  const host = routerHost.trim() || '192.168.1.1';
+  const port = controllerPort || 9090;
+  const baseUrl = `http://${host}:${port}`;
+
+  const headers: Record<string, string> = {};
+  if (secret.trim()) {
+    headers['Authorization'] = `Bearer ${secret.trim()}`;
+  }
+
+  try {
+    const res = await fetch(`${baseUrl}/connections/${encodeURIComponent(connectionId)}`, {
+      method: 'DELETE',
+      headers,
+      mode: 'cors',
+    });
+    return { success: res.ok };
+  } catch (err: any) {
+    return { success: false, error: err.message || '断开连接失败' };
+  }
+}
+
+/**
+ * Fetch real DHCP leases from OpenWrt LuCI ubus / rpc
  */
 export async function fetchLuciDhcpLeases(
   routerHost: string,
@@ -126,7 +246,6 @@ export async function fetchLuciDhcpLeases(
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // OpenWrt ubus standard call for dhcp leases: luci-rpc or network.device
     const res = await fetch(`http://${host}/cgi-bin/luci/rpc/sys?auth=anonymous`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -164,12 +283,47 @@ export async function fetchLuciDhcpLeases(
 }
 
 /**
+ * Parse raw text format such as /tmp/dhcp.leases or /etc/hosts
+ */
+export function parseRawDhcpLeasesText(text: string): Record<string, { hostname?: string; mac?: string; ip?: string }> {
+  const result: Record<string, { hostname?: string; mac?: string; ip?: string }> = {};
+  if (!text || !text.trim()) return result;
+
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    // OpenWrt dnsmasq /tmp/dhcp.leases format:
+    // <timestamp> <mac> <ip> <hostname> <client-id>
+    const tokens = trimmed.split(/\s+/);
+    if (tokens.length >= 4 && tokens[1].includes(':') && tokens[2].includes('.')) {
+      const mac = tokens[1].toUpperCase();
+      const ip = tokens[2];
+      const hostname = tokens[3] !== '*' ? tokens[3] : '';
+      result[ip] = { ip, mac, hostname };
+      continue;
+    }
+
+    // Standard /etc/hosts format: <ip> <hostname> [aliases...]
+    if (tokens.length >= 2 && tokens[0].includes('.')) {
+      const ip = tokens[0];
+      const hostname = tokens[1];
+      result[ip] = { ip, hostname, mac: generatePseudoMac(ip) };
+    }
+  }
+
+  return result;
+}
+
+/**
  * Transform Clash /connections REST response into structured ClientDevice[]
  */
 export function parseClashConnectionsToClients(
   clashData: any,
   rules: TrafficRule[] = [],
-  dhcpMap: Record<string, { hostname?: string; mac?: string; name?: string }> = {}
+  dhcpMap: Record<string, { hostname?: string; mac?: string; name?: string }> = {},
+  visitorIp: string = ''
 ): ClientDevice[] {
   if (!clashData || !Array.isArray(clashData.connections)) {
     return [];
@@ -187,11 +341,11 @@ export function parseClashConnectionsToClients(
     targetGroups: Map<string, number>;
     proxyNodes: Map<string, number>;
     matchedRules: Map<string, { rulePayload: string; ruleType: any; targetGroup: string; hitCount: number }>;
+    connectionItems: ClientConnectionItem[];
   }>();
 
   for (const conn of rawConnections) {
     const metadata = conn.metadata || {};
-    // sourceIP may be in metadata.sourceIP or metadata.remoteDestination or conn.id
     const srcIp = metadata.sourceIP || (conn.network === 'tcp' ? metadata.sourceAddress : '') || '192.168.1.2';
     if (!srcIp || srcIp === '127.0.0.1' || srcIp === '::1') continue;
 
@@ -208,6 +362,7 @@ export function parseClashConnectionsToClients(
         targetGroups: new Map(),
         proxyNodes: new Map(),
         matchedRules: new Map(),
+        connectionItems: [],
       };
       clientMap.set(srcIp, c);
     }
@@ -215,8 +370,10 @@ export function parseClashConnectionsToClients(
     c.conns += 1;
     c.totalUpload += (conn.upload || 0);
     c.totalDownload += (conn.download || 0);
-    c.uploadSpeed += (conn.curUploadSpeed || conn.uploadSpeed || 0);
-    c.downloadSpeed += (conn.curDownloadSpeed || conn.downloadSpeed || 0);
+    const upSpd = conn.curUploadSpeed || conn.uploadSpeed || 0;
+    const downSpd = conn.curDownloadSpeed || conn.downloadSpeed || 0;
+    c.uploadSpeed += upSpd;
+    c.downloadSpeed += downSpd;
 
     // Host / Domain analysis
     const domain = metadata.host || metadata.destinationIP || 'unknown';
@@ -229,8 +386,8 @@ export function parseClashConnectionsToClients(
     const activeGroup = chain.length > 0 ? chain[0] : (conn.rulePayload || 'DIRECT');
     c.targetGroups.set(activeGroup, (c.targetGroups.get(activeGroup) || 0) + 1);
 
+    const activeNode = chain.length > 1 ? chain[chain.length - 1] : (chain[0] || 'DIRECT');
     if (chain.length > 1) {
-      const activeNode = chain[chain.length - 1];
       c.proxyNodes.set(activeNode, (c.proxyNodes.get(activeNode) || 0) + 1);
     }
 
@@ -249,6 +406,29 @@ export function parseClashConnectionsToClients(
         hitCount: 1,
       });
     }
+
+    // Detailed connection item (Open-Box style connection inspector)
+    if (c.connectionItems.length < 50) {
+      c.connectionItems.push({
+        id: conn.id || `${srcIp}-${metadata.destinationPort}-${Math.random().toString(36).substring(7)}`,
+        network: conn.network || metadata.network || 'tcp',
+        type: metadata.type || 'HTTP',
+        host: metadata.host || metadata.destinationIP || 'unknown',
+        destinationIP: metadata.destinationIP || '',
+        destinationPort: Number(metadata.destinationPort || 80),
+        sourcePort: Number(metadata.sourcePort || 0),
+        rule: ruleType,
+        rulePayload: rulePayload || '',
+        outboundGroup: activeGroup,
+        outboundNode: activeNode,
+        upload: conn.upload || 0,
+        download: conn.download || 0,
+        uploadSpeed: upSpd,
+        downloadSpeed: downSpd,
+        start: conn.start || '',
+        process: metadata.processPath || metadata.process || '',
+      });
+    }
   }
 
   // Convert to ClientDevice array
@@ -256,26 +436,23 @@ export function parseClashConnectionsToClients(
   let clientIndex = 1;
 
   for (const [ip, c] of clientMap.entries()) {
-    // Sort top domains
     const sortedDomains = Array.from(c.topDomains.entries()).sort((a, b) => b[1] - a[1]);
     const topDomain = sortedDomains.length > 0 ? sortedDomains[0][0] : 'lan.local';
 
-    // Sort target group
     const sortedGroups = Array.from(c.targetGroups.entries()).sort((a, b) => b[1] - a[1]);
     const topGroup = sortedGroups.length > 0 ? sortedGroups[0][0] : 'DIRECT';
 
-    // Sort proxy nodes
     const sortedNodes = Array.from(c.proxyNodes.entries()).sort((a, b) => b[1] - a[1]);
     const topNode = sortedNodes.length > 0 ? sortedNodes[0][0] : undefined;
 
-    // DHCP resolution
     const dhcpInfo = dhcpMap[ip] || {};
     const defaultHost = `Device-${ip.split('.').pop() || clientIndex}.lan`;
     const hostname = dhcpInfo.hostname || defaultHost;
     const mac = dhcpInfo.mac || generatePseudoMac(ip);
     const vendor = inferVendor(mac, hostname);
     const deviceType = inferDeviceType(hostname, vendor);
-    const customName = dhcpInfo.name || formatClientDeviceName(ip, hostname, deviceType);
+    const isCurrent = visitorIp ? ip === visitorIp : false;
+    const customName = dhcpInfo.name || (isCurrent ? '本机当前设备' : formatClientDeviceName(ip, hostname, deviceType));
 
     result.push({
       id: `real-client-${ip.replace(/[.:]/g, '-')}`,
@@ -293,18 +470,25 @@ export function parseClashConnectionsToClients(
       topDomain,
       activeTargetGroup: topGroup,
       activeProxyNode: topNode,
-      matchedRuleSummaries: Array.from(c.matchedRules.values()).slice(0, 5),
+      matchedRuleSummaries: Array.from(c.matchedRules.values()).slice(0, 6),
+      isCurrentClient: isCurrent,
+      bypassMode: 'rule',
+      activeConnectionsList: c.connectionItems,
     });
 
     clientIndex++;
   }
 
-  // Sort by active connections or download bandwidth desc
-  return result.sort((a, b) => (b.activeConnections * 1000 + b.downloadSpeed) - (a.activeConnections * 1000 + a.downloadSpeed));
+  // Sort: visitor client first, then by active connections / download speed
+  return result.sort((a, b) => {
+    if (a.isCurrentClient) return -1;
+    if (b.isCurrentClient) return 1;
+    return (b.activeConnections * 1000 + b.downloadSpeed) - (a.activeConnections * 1000 + a.downloadSpeed);
+  });
 }
 
 // Pseudo MAC generator based on IP for devices without ARP table
-function generatePseudoMac(ip: string): string {
+export function generatePseudoMac(ip: string): string {
   const parts = ip.split('.').map(Number);
   const p1 = (parts[0] || 192).toString(16).padStart(2, '0');
   const p2 = (parts[1] || 168).toString(16).padStart(2, '0');
@@ -313,7 +497,7 @@ function generatePseudoMac(ip: string): string {
   return `52:54:00:${p2}:${p3}:${p4}`.toUpperCase();
 }
 
-function formatClientDeviceName(ip: string, hostname: string, type: DeviceType): string {
+export function formatClientDeviceName(ip: string, hostname: string, type: DeviceType): string {
   if (hostname && !hostname.startsWith('Device-') && !hostname.endsWith('.lan')) {
     return hostname;
   }
